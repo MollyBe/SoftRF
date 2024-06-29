@@ -55,8 +55,8 @@ extern const gnss_chip_ops_t goke_ops; /* forward declaration */
 boolean gnss_set_sucess = false ;
 TinyGPSPlus gnss;  // Create an Instance of the TinyGPS++ object called gnss
 
-uint8_t GNSSbuf[250]; // at least 3 lines of 80 characters each
-                      // and 40+30*N bytes for "UBX-MON-VER" payload
+// uint8_t GNSSbuf[250]; // at least 3 lines of 80 characters each and 40+30*N bytes for "UBX-MON-VER" payload
+uint8_t GNSSbuf[5000]; // max. buffer for GPS_HIGH_RATE: (GGA+GSA+GSV+RMC+VTC+GST = 6 lines) * 80 * 10(Hz) = 4800
 
 int GNSS_cnt           = 0;
 uint16_t FW_Build_Year = 2000 + ((__DATE__[ 9]) - '0') * 10 + ((__DATE__[10]) - '0');
@@ -193,7 +193,7 @@ const gnss_chip_ops_t generic_nmea_ops = {
  /*                               Class ID    I2C   UART1 UART2 USB   SPI   Res */
 const uint8_t setGGA[] PROGMEM = {0xF0, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01}; /* enable GGA for Stratux */
 const uint8_t setGLL[] PROGMEM = {0xF0, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01}; /* disable GLL */
-const uint8_t setGSA[] PROGMEM = {0xF0, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01}; /* enable GSA for Stratux */
+const uint8_t setGSA[] PROGMEM = {0xF0, 0x02, 0x00, 0x05, 0x00, 0x00, 0x00, 0x01}; /* enable GSA for Stratux */
 const uint8_t setGSV[] PROGMEM = {0xF0, 0x03, 0x00, 0x05, 0x00, 0x00, 0x00, 0x01}; /* enable GSV for Stratux */
 const uint8_t setRMC[] PROGMEM = {0xF0, 0x04, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01}; /* enable RMC for Stratux */
 const uint8_t setVTG[] PROGMEM = {0xF0, 0x05, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01}; /* enable VTG for Stratux */
@@ -249,6 +249,7 @@ const uint8_t CFG_RATE_NAV[] PROGMEM = {0xB5, 0x62, 0x06, 0x8A, 0x0A, 0x00, 0x01
 // CFG-SIGNAL-..._ENA = default (The default configuration is concurrent reception of GPS, Galileo and BeiDou B1I with QZSS and SBAS enabled)
 
  /* Stratux Setup: enable GPS & Galileo & Beidou for u-blox 8 */
+#if !defined(GPS_HIGH_RATE) && !defined(GPS_MEDIUM_RATE)
 const uint8_t setGNSS_U8[] PROGMEM = {0x00, 0x00, 0xFF, 0x07,
                                       0x00, 0x08, 0x10, 0x00, 0x01, 0x00, 0x01, 0x01,  /* enable GPS */
                                       0x01, 0x01, 0x03, 0x00, 0x01, 0x00, 0x01, 0x01,  /* enable SBAS */
@@ -257,6 +258,16 @@ const uint8_t setGNSS_U8[] PROGMEM = {0x00, 0x00, 0xFF, 0x07,
                                       0x03, 0x08, 0x10, 0x00, 0x01, 0x00, 0x01, 0x01,  /* enable Beidou */
                                       0x05, 0x01, 0x03, 0x00, 0x01, 0x00, 0x01, 0x01,  /* enable QZSS */
                                       0x06, 0x08, 0x10, 0x00, 0x00, 0x00, 0x01, 0x01}; /* disable Glonass */
+#else
+const uint8_t setGNSS_U8[] PROGMEM = {0x00, 0x00, 0xFF, 0x07,
+                                      0x00, 0x08, 0x10, 0x00, 0x01, 0x00, 0x01, 0x01,  /* enable GPS */
+                                      0x01, 0x01, 0x03, 0x00, 0x01, 0x00, 0x01, 0x01,  /* enable SBAS */
+                                      0x02, 0x08, 0x08, 0x00, 0x00, 0x00, 0x01, 0x01,  /* disable Galileo */
+                                      0x04, 0x00, 0x08, 0x00, 0x00, 0x00, 0x01, 0x01,  /* disable IMES */
+                                      0x03, 0x08, 0x10, 0x00, 0x00, 0x00, 0x01, 0x01,  /* disable Beidou */
+                                      0x05, 0x01, 0x03, 0x00, 0x01, 0x00, 0x01, 0x01,  /* enable QZSS */
+                                      0x06, 0x08, 0x10, 0x00, 0x01, 0x00, 0x01, 0x01}; /* enable Glonass */
+#endif
 
  /* Stratux Setup: set NMEA protocol version and numbering for u-blox 8 */
 const uint8_t setNMEA_U8[] PROGMEM = {0x00, 0x40, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00,  /* NMEA protocol v4.0 extended */
@@ -275,7 +286,20 @@ const uint8_t defaultCFG[] PROGMEM = {0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 
 const uint8_t saveCFG[] PROGMEM = {0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03};
 
  /* Stratux Setup: set update rate */
-const uint8_t setRATE[] PROGMEM = {0x64, 0x00, 0x0A, 0x00, 0x01, 0x00}; /* set to 1Hz (10Hz measurement rate, 10 measurements per navigation solution) */
+
+#if defined(GPS_HIGH_RATE)
+  const uint8_t setRATE[] PROGMEM = {0x64, 0x00, 0x01, 0x00, 0x01, 0x00}; /* set to 10Hz (10Hz measurement rate, 1 measurements per navigation solution) */
+#else
+#if defined(GPS_MEDIUM_RATE)
+  const uint8_t setRATE[] PROGMEM = {0x64, 0x00, 0x02, 0x00, 0x01, 0x00}; /* set to 5Hz (10Hz measurement rate, 2 measurements per navigation solution) */
+#else
+  const uint8_t setRATE[] PROGMEM = {0x64, 0x00, 0x0A, 0x00, 0x01, 0x00}; /* set to 1Hz (10Hz measurement rate, 10 measurements per navigation solution) */
+#endif
+#endif
+
+//const uint8_t setRATE[] PROGMEM = {0x64, 0x00, 0x05, 0x00, 0x01, 0x00}; /* set to 2Hz (10Hz measurement rate, 5 measurements per navigation solution) */
+//const uint8_t setRATE[] PROGMEM = {0x64, 0x00, 0x03, 0x00, 0x01, 0x00}; /* set to 3.3Hz (10Hz measurement rate, 3 measurements per navigation solution) */
+//const uint8_t setRATE[] PROGMEM = {0x64, 0x00, 0x02, 0x00, 0x01, 0x00}; /* set to 5Hz (10Hz measurement rate, 2 measurements per navigation solution) */
 //const uint8_t setRATE[] PROGMEM = {0xE8, 0x03, 0x01, 0x00, 0x01, 0x00}; /* set to 1Hz (1Hz measurement rate, 1 measurement per navigation solution) */
 //const uint8_t setRATE[] PROGMEM = {0xF4, 0x01, 0x01, 0x00, 0x01, 0x00}; /* set to 2Hz (2Hz measurement rate, 1 measurement per navigation solution) */
 //const uint8_t setRATE[] PROGMEM = {0xC8, 0x00, 0x01, 0x00, 0x01, 0x00}; /* set to 5Hz (5Hz measurement rate, 1 measurement per navigation solution) */
@@ -378,46 +402,56 @@ static void setup_UBX()
 {
   uint8_t msglen;
 
-#if 0
-  unsigned int baudrate = 38400;
+  // force u-blox cold start
+  // for (int i = 0; i < sizeof(CFG_RST_COLD); i++) {
+  //   Serial_GNSS_Out.write(pgm_read_byte(&CFG_RST_COLD[i]));
+  // }
+  // Serial.println(F("U-BLOX GNSS module Cold Start"));
+  // delay(2000);
 
-  setBR[ 8] = (baudrate      ) & 0xFF;
-  setBR[ 9] = (baudrate >>  8) & 0xFF;
-  setBR[10] = (baudrate >> 16) & 0xFF;
+  const unsigned long baudrates[] = {9600, 115200, 38400, 9600, 19200, 57600};
+  for (unsigned long old_baudrate : baudrates) {
+    SoC->swSer_begin(old_baudrate);
+    if (generic_nmea_probe() != GNSS_MODULE_NONE) {
+      Serial.print(F("U-BLOX GNSS module detected with ")); Serial.print(old_baudrate); Serial.println(F(" baud"));
+      break;
+    }
+  }
 
-  SoC->swSer_begin(9600);
-
-  Serial.print(F("Switching baud rate onto "));
-  Serial.println(baudrate);
+  unsigned int new_baudrate = SERIAL_IN_BR;
+  setBR[ 8] = (new_baudrate      ) & 0xFF;
+  setBR[ 9] = (new_baudrate >>  8) & 0xFF;
+  setBR[10] = (new_baudrate >> 16) & 0xFF;
 
   msglen = makeUBXCFG(0x06, 0x00, sizeof(setBR), setBR);
   sendUBX(GNSSbuf, msglen);
   gnss_set_sucess = getUBX_ACK(0x06, 0x00);
-
   if (!gnss_set_sucess) {
-    Serial.print(F("WARNING: Unable to set baud rate onto "));
-    Serial.println(baudrate); 
+    Serial.print(F("WARNING: Unable to set U-BLOX GNSS module baudrate to ")); Serial.print(new_baudrate); Serial.println(F(" baud"));
   }
+
   Serial_GNSS_In.flush();
-  SoC->swSer_begin(baudrate);
-#endif
+
+  SoC->swSer_begin(new_baudrate);
+
+  Serial.print(F("U-BLOX GNSS module opened with ")); Serial.print(new_baudrate); Serial.println(F(" baud"));
 
   byte version = ublox_version();
 
-  if ((version == GNSS_MODULE_U6) || (version == GNSS_MODULE_U7) || (version == GNSS_MODULE_U8))
-  {
-    msglen = makeUBXCFG(0x06, 0x09, sizeof(defaultCFG), defaultCFG);
-    sendUBX(GNSSbuf, msglen);
-    gnss_set_sucess = getUBX_ACK(0x06, 0x09);
-    if (!gnss_set_sucess)
-    {
-      Serial.println(F("WARNING: Unable to load u-blox defaults"));
-    }
-    else
-    {
-      Serial.println(F("Sucessfully loaded u-blox defaults"));
-    }
-  } /* GNSS_MODULE_U678 */
+  // if ((version == GNSS_MODULE_U6) || (version == GNSS_MODULE_U7) || (version == GNSS_MODULE_U8))
+  // {
+  //   msglen = makeUBXCFG(0x06, 0x09, sizeof(defaultCFG), defaultCFG);
+  //   sendUBX(GNSSbuf, msglen);
+  //   gnss_set_sucess = getUBX_ACK(0x06, 0x09);
+  //   if (!gnss_set_sucess)
+  //   {
+  //     Serial.println(F("WARNING: Unable to load u-blox defaults"));
+  //   }
+  //   else
+  //   {
+  //     Serial.println(F("Sucessfully loaded u-blox defaults"));
+  //   }
+  // } /* GNSS_MODULE_U678 */
 
   if (version == GNSS_MODULE_U8)
   {
@@ -1360,7 +1394,14 @@ byte GNSS_setup() {
 
   gnss_id_t gnss_id = GNSS_MODULE_NONE;
 
-  SoC->swSer_begin(SERIAL_IN_BR);
+  const unsigned long baudrates[] = {9600, 115200, 38400, 9600, 19200, 57600};
+  for (unsigned long baud : baudrates) {
+    SoC->swSer_begin(baud);
+    if (generic_nmea_probe() != GNSS_MODULE_NONE) {
+      Serial.print(F("GNSS module detected with ")); Serial.print(baud); Serial.println(F(" baud"));
+      break;
+    }
+  }
 
   if (hw_info.model == SOFTRF_MODEL_PRIME_MK2 ||
       hw_info.model == SOFTRF_MODEL_PRIME_MK3 ||
@@ -1370,7 +1411,9 @@ byte GNSS_setup() {
       hw_info.model == SOFTRF_MODEL_ES        ||
       hw_info.model == SOFTRF_MODEL_BALKAN    ||
       hw_info.model == SOFTRF_MODEL_HAM       ||
-      hw_info.model == SOFTRF_MODEL_MIDI)
+      hw_info.model == SOFTRF_MODEL_MIDI      ||
+      hw_info.model == SOFTRF_MODEL_ECO       ||
+      hw_info.model == SOFTRF_MODEL_INK)
   {
     // power on by wakeup call
     Serial_GNSS_Out.write((uint8_t) 0); GNSS_FLUSH(); delay(500);
@@ -1450,7 +1493,12 @@ byte GNSS_setup() {
 #else
     int interrupt_num = digitalPinToInterrupt(SOC_GPIO_PIN_GNSS_PPS);
     if (interrupt_num != NOT_AN_INTERRUPT) {
+#if defined(plat_attachInterrupt_func)
+      plat_attachInterrupt_func(SOC_GPIO_PIN_GNSS_PPS, SoC->GNSS_PPS_handler,
+                                RISING);
+#else
       attachInterrupt(interrupt_num, SoC->GNSS_PPS_handler, RISING);
+#endif /* plat_attachInterrupt_func */
     }
 #endif
   }

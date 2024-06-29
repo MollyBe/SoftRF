@@ -228,8 +228,11 @@ static void ESP32_Bluetooth_setup()
       esp_bt_controller_mem_release(ESP_BT_MODE_BLE);
 
       BT_name += String(SoC->getChipId() & 0x00FFFFFFU, HEX);
-
+#if !defined(ESP_IDF_VERSION_MAJOR) || ESP_IDF_VERSION_MAJOR < 5
       SerialBT.setPin(settings->key);
+#elif !defined(CONFIG_BT_SSP_ENABLED)
+      SerialBT.setPin(settings->key);
+#endif /* ESP_IDF_VERSION_MAJOR */
       SerialBT.begin(BT_name.c_str(), true);
 
       xTaskCreate(ESP32_BT_SPP_Connection_Manager, "BT SPP ConMgr Task", 2048, NULL, tskIDLE_PRIORITY, NULL);

@@ -137,6 +137,33 @@ void TFT_backlight_on()
 }
 #endif /* USE_TFT */
 
+#if defined(USE_EPAPER)
+#include "../driver/EPD.h"
+
+GxEPD2_BW<GxEPD2_213_BN, GxEPD2_213_BN::HEIGHT> epd_bn (GxEPD2_213_BN(
+                                                        SOC_GPIO_PIN_T3S3_EPD_SS,
+                                                        SOC_GPIO_PIN_T3S3_EPD_DC,
+                                                        SOC_GPIO_PIN_T3S3_EPD_RST,
+                                                        SOC_GPIO_PIN_T3S3_EPD_BUSY));
+GxEPD2_GFX *display;
+
+#if defined(USE_EPD_TASK)
+#define EPD_STACK_SZ      (256*6)
+static TaskHandle_t EPD_Task_Handle = NULL;
+SemaphoreHandle_t Display_Semaphore;
+unsigned long TaskInfoTime;
+#endif /* USE_EPD_TASK */
+
+const char *Hardware_Rev[] = {
+  [0] = "2024-02-28",
+  [1] = "TBD",
+  [2] = "TBD",
+  [3] = "Unknown"
+};
+
+static bool screen_saver = false;
+#endif /* USE_EPAPER */
+
 AXP20X_Class axp_xxx;
 XPowersPMU   axp_2xxx;
 
@@ -164,6 +191,7 @@ const char *ESP32SX_Model_Stand  = "Standalone Edition"; /* 303a:8132 */
 const char *ESP32S3_Model_Prime3 = "Prime Edition Mk.3"; /* 303a:8133 */
 const char *ESP32S3_Model_Ham    = "Ham Edition";        /* 303a:818F */
 const char *ESP32S3_Model_Midi   = "Midi Edition";       /* 303a:81A0 */
+const char *ESP32S3_Model_Ink    = "Ink Edition";        /* 303a:820A */
 const uint16_t ESP32SX_Device_Version = SOFTRF_USB_FW_VERSION;
 
 #if defined(EXCLUDE_WIFI)
@@ -200,7 +228,6 @@ PCF8563_Class *rtc              = nullptr;
 I2CBus        *i2c              = nullptr;
 
 static bool ESP32_has_spiflash  = false;
-static uint32_t spiflash_id     = 0;
 static bool FATFS_is_mounted    = false;
 static bool ADB_is_open         = false;
 static bool RTC_sync            = false;
@@ -234,7 +261,7 @@ ui_settings_t ui_settings = {
     .units        = UNITS_METRIC,
     .zoom         = ZOOM_MEDIUM,
     .protocol     = PROTOCOL_NMEA,
-    .rotate       = ROTATE_90,
+    .rotate       = ROTATE_0,
     .orientation  = DIRECTION_TRACK_UP,
     .adb          = DB_OGN,
     .idpref       = ID_TYPE,
@@ -552,6 +579,7 @@ static void ESP32_setup()
    *  Heltec Tracker  |               | GIGADEVICE_GD25Q64
    *                  | WT0132C6-S5   | ZBIT_ZB25VQ32B
    *  LilyGO T3-C6    | ESP32-C6-MINI | XMC_XM25QH32B
+   *  LilyGO T3-S3-EP | ESP32-S3-MINI | XMC_XM25QH32B
    */
 
   if (psramFound()) {
@@ -576,6 +604,9 @@ static void ESP32_setup()
     case MakeFlashId(GIGADEVICE_ID, GIGADEVICE_GD25Q128):
       /* specific to psram_type=opi enabled custom build */
       hw_info.model = SOFTRF_MODEL_HAM;
+      break;
+    case MakeFlashId(ST_ID, XMC_XM25QH32B):
+      esp32_board   = ESP32_LILYGO_T3S3_EPD; /* ESP32-S3-MINI-1U */
       break;
     /* Both Ai-Thinker ESP-S3-12K and LilyGO S3 Core have QSPI PSRAM onboard */
     case MakeFlashId(GIGADEVICE_ID, GIGADEVICE_GD25Q64):
@@ -1283,6 +1314,13 @@ static void ESP32_setup()
     }
   } else if (hw_info.model == SOFTRF_MODEL_MIDI) {
 
+#if defined(ESP_IDF_VERSION_MAJOR) && ESP_IDF_VERSION_MAJOR >= 5
+    #define BOARD_F_XTAL_MHZ 26
+
+    rtc_clk_xtal_freq_update((rtc_xtal_freq_t) BOARD_F_XTAL_MHZ);
+    rtc_clk_cpu_freq_set_xtal();
+#endif /* ESP_IDF_VERSION_MAJOR */
+
 #if ARDUINO_USB_CDC_ON_BOOT
     SerialOutput.begin(SERIAL_OUT_BR, SERIAL_OUT_BITS,
                        SOC_GPIO_PIN_S3_CONS_RX,
@@ -1295,6 +1333,42 @@ static void ESP32_setup()
 #if defined(USE_RADIOLIB)
     lmic_pins.dio[0] = SOC_GPIO_PIN_HELTRK_DIO1;
 #endif /* USE_RADIOLIB */
+
+  } else if (esp32_board == ESP32_LILYGO_T3S3_EPD) {
+
+    hw_info.model    = SOFTRF_MODEL_INK;
+    hw_info.revision = 0; /* 2024-02-28 */
+
+#if ARDUINO_USB_CDC_ON_BOOT
+    SerialOutput.begin(SERIAL_OUT_BR, SERIAL_OUT_BITS,
+                       SOC_GPIO_PIN_T3S3_CONS_RX,
+                       SOC_GPIO_PIN_T3S3_CONS_TX);
+#endif /* ARDUINO_USB_CDC_ON_BOOT */
+
+    lmic_pins.nss  = SOC_GPIO_PIN_T3S3_SS;
+    lmic_pins.rst  = SOC_GPIO_PIN_T3S3_RST;
+    lmic_pins.busy = SOC_GPIO_PIN_T3S3_BUSY;
+    lmic_pins.txe  = SOC_GPIO_PIN_T3S3_ANT_TX;
+    lmic_pins.rxe  = SOC_GPIO_PIN_T3S3_ANT_RX;
+#if defined(USE_RADIOLIB)
+    lmic_pins.dio[0] = SOC_GPIO_PIN_T3S3_DIO1;
+#endif /* USE_RADIOLIB */
+
+    pinMode(SOC_GPIO_PIN_T3S3_3V3EN, INPUT_PULLUP);
+
+    int uSD_SS_pin = SOC_GPIO_PIN_T3S3_SD_SS;
+
+    /* uSD-SPI init */
+    uSD_SPI.begin(SOC_GPIO_PIN_T3S3_SD_SCK,
+                  SOC_GPIO_PIN_T3S3_SD_MISO,
+                  SOC_GPIO_PIN_T3S3_SD_MOSI,
+                  uSD_SS_pin);
+
+    pinMode(uSD_SS_pin, OUTPUT);
+    digitalWrite(uSD_SS_pin, HIGH);
+
+    uSD_is_attached = uSD.cardBegin(SD_CONFIG);
+
 #endif /* CONFIG_IDF_TARGET_ESP32S3 */
 
 #if defined(CONFIG_IDF_TARGET_ESP32C2)
@@ -1336,6 +1410,8 @@ static void ESP32_setup()
 
   } else if (esp32_board == ESP32_LILYGO_T3C6) {
 
+    hw_info.model  = SOFTRF_MODEL_ECO;
+
 #if ARDUINO_USB_CDC_ON_BOOT
     SerialOutput.begin(SERIAL_OUT_BR, SERIAL_OUT_BITS,
                        SOC_GPIO_PIN_T3C6_CONS_RX,
@@ -1347,7 +1423,9 @@ static void ESP32_setup()
     lmic_pins.busy = SOC_GPIO_PIN_T3C6_BUSY;
     lmic_pins.txe  = SOC_GPIO_PIN_T3C6_ANT_TX;
     lmic_pins.rxe  = SOC_GPIO_PIN_T3C6_ANT_RX;
-
+#if defined(USE_RADIOLIB)
+    lmic_pins.dio[0] = SOC_GPIO_PIN_T3C6_DIO1;
+#endif /* USE_RADIOLIB */
 #endif /* CONFIG_IDF_TARGET_ESP32C6 */
   }
 
@@ -1355,9 +1433,8 @@ static void ESP32_setup()
   ESP32_has_spiflash = SPIFlash->begin(possible_devices,
                                        EXTERNAL_FLASH_DEVICE_COUNT);
   if (ESP32_has_spiflash) {
-    spiflash_id = SPIFlash->getJEDECID();
+    uint32_t capacity = ESP32_getFlashId() & 0xFF;
 
-    uint32_t capacity = spiflash_id & 0xFF;
     if (capacity >= 0x17) { /* equal or greater than 1UL << 23 (8 MiB) */
       hw_info.storage = STORAGE_FLASH;
 
@@ -1422,6 +1499,7 @@ static void ESP32_setup()
           (esp32_board == ESP32_S3_DEVKIT          ) ? SOFTRF_USB_PID_STANDALONE :
           (esp32_board == ESP32_LILYGO_T_TWR2      ) ? SOFTRF_USB_PID_HAM        :
           (esp32_board == ESP32_HELTEC_TRACKER     ) ? SOFTRF_USB_PID_MIDI       :
+          (esp32_board == ESP32_LILYGO_T3S3_EPD    ) ? SOFTRF_USB_PID_INK        :
           USB_PID /* 0x1001 */ ;
 
     snprintf(usb_serial_number, sizeof(usb_serial_number),
@@ -1434,6 +1512,7 @@ static void ESP32_setup()
     USB.productName(esp32_board == ESP32_TTGO_T_BEAM_SUPREME ? ESP32S3_Model_Prime3 :
                     esp32_board == ESP32_LILYGO_T_TWR2       ? ESP32S3_Model_Ham    :
                     esp32_board == ESP32_HELTEC_TRACKER      ? ESP32S3_Model_Midi   :
+                    esp32_board == ESP32_LILYGO_T3S3_EPD     ? ESP32S3_Model_Ink    :
                     ESP32SX_Model_Stand);
     USB.firmwareVersion(ESP32SX_Device_Version);
     USB.serialNumber(usb_serial_number);
@@ -1875,6 +1954,70 @@ static void ESP32_post_init()
 
     break;
 #endif /* USE_OLED */
+
+#if defined(USE_EPAPER)
+  case DISPLAY_EPD_1_54:
+  case DISPLAY_EPD_2_13:
+    if (hw_info.model == SOFTRF_MODEL_INK) {
+
+      EPD_info1();
+
+      char key[8];
+      char out[64];
+      uint8_t tokens[3] = { 0 };
+      cdbResult rt;
+      int c, i = 0, token_cnt = 0;
+
+      int acfts;
+      char *reg, *mam, *cn;
+      reg = mam = cn = NULL;
+
+      if (ADB_is_open) {
+        acfts = ucdb.recordsNumber();
+
+        snprintf(key, sizeof(key),"%06X", ThisAircraft.addr);
+
+        rt = ucdb.findKey(key, strlen(key));
+
+        switch (rt) {
+          case KEY_FOUND:
+            while ((c = ucdb.readValue()) != -1 && i < (sizeof(out) - 1)) {
+              if (c == '|') {
+                if (token_cnt < (sizeof(tokens) - 1)) {
+                  token_cnt++;
+                  tokens[token_cnt] = i+1;
+                }
+                c = 0;
+              }
+              out[i++] = (char) c;
+            }
+            out[i] = 0;
+
+            reg = out + tokens[1];
+            mam = out + tokens[0];
+            cn  = out + tokens[2];
+
+            break;
+
+          case KEY_NOT_FOUND:
+          default:
+            break;
+        }
+
+        reg = (reg != NULL) && strlen(reg) ? reg : (char *) "REG: N/A";
+        mam = (mam != NULL) && strlen(mam) ? mam : (char *) "M&M: N/A";
+        cn  = (cn  != NULL) && strlen(cn)  ? cn  : (char *) "N/A";
+
+      } else {
+        acfts = -1;
+      }
+
+      EPD_info2(acfts, reg, mam, cn);
+    }
+
+    break;
+#endif /* USE_EPAPER */
+
   case DISPLAY_NONE:
   default:
     break;
@@ -2333,6 +2476,13 @@ static void ESP32_fini(int reason)
     pinMode(SOC_GPIO_PIN_HELTRK_ADC_EN,    INPUT);
     pinMode(SOC_GPIO_PIN_HELTRK_VEXT_EN,   INPUT);
     pinMode(SOC_GPIO_PIN_HELTRK_LED,       INPUT);
+
+#if !defined(CONFIG_IDF_TARGET_ESP32C2) && !defined(CONFIG_IDF_TARGET_ESP32C3)
+    esp_sleep_enable_ext1_wakeup(1ULL << SOC_GPIO_PIN_S3_BUTTON,
+                                 ESP_EXT1_WAKEUP_ALL_LOW);
+#endif /* CONFIG_IDF_TARGET_ESP32C2 || C3 */
+  } else if (esp32_board == ESP32_LILYGO_T3S3_EPD) {
+    pinMode(SOC_GPIO_PIN_T3S3_3V3EN,       INPUT_PULLDOWN);
 
 #if !defined(CONFIG_IDF_TARGET_ESP32C2) && !defined(CONFIG_IDF_TARGET_ESP32C3)
     esp_sleep_enable_ext1_wakeup(1ULL << SOC_GPIO_PIN_S3_BUTTON,
@@ -3042,6 +3192,10 @@ static void ESP32_SPI_begin()
       SPI.begin(SOC_GPIO_PIN_T3C6_SCK,  SOC_GPIO_PIN_T3C6_MISO,
                 SOC_GPIO_PIN_T3C6_MOSI, SOC_GPIO_PIN_T3C6_SS);
       break;
+    case ESP32_LILYGO_T3S3_EPD:
+      SPI.begin(SOC_GPIO_PIN_T3S3_SCK,  SOC_GPIO_PIN_T3S3_MISO,
+                SOC_GPIO_PIN_T3S3_MOSI, SOC_GPIO_PIN_T3S3_SS);
+      break;
     default:
       SPI.begin(SOC_GPIO_PIN_SCK,  SOC_GPIO_PIN_MISO,
                 SOC_GPIO_PIN_MOSI, SOC_GPIO_PIN_SS);
@@ -3135,6 +3289,10 @@ static void ESP32_swSer_begin(unsigned long baud)
       Serial.println(F("INFO: LilyGO T3-C6 is detected."));
       Serial_GNSS_In.begin(baud, SERIAL_IN_BITS,
                            SOC_GPIO_PIN_T3C6_GNSS_RX, SOC_GPIO_PIN_T3C6_GNSS_TX);
+     } else if (esp32_board == ESP32_LILYGO_T3S3_EPD) {
+      Serial.println(F("INFO: LilyGO T3-S3 EPD is detected."));
+      Serial_GNSS_In.begin(baud, SERIAL_IN_BITS,
+                           SOC_GPIO_PIN_T3S3_GNSS_RX, SOC_GPIO_PIN_T3S3_GNSS_TX);
     } else {
       /* open Standalone's GNSS port */
       Serial_GNSS_In.begin(baud, SERIAL_IN_BITS,
@@ -3189,9 +3347,10 @@ static byte ESP32_Display_setup()
 {
   byte rval = DISPLAY_NONE;
 
-  if (esp32_board != ESP32_TTGO_T_WATCH &&
-      esp32_board != ESP32_S2_T8_V1_1   &&
-      esp32_board != ESP32_HELTEC_TRACKER) {
+  if (esp32_board != ESP32_TTGO_T_WATCH   &&
+      esp32_board != ESP32_S2_T8_V1_1     &&
+      esp32_board != ESP32_HELTEC_TRACKER &&
+      esp32_board != ESP32_LILYGO_T3S3_EPD) {
 
 #if defined(USE_OLED)
     bool has_oled = false;
@@ -3336,6 +3495,28 @@ static byte ESP32_Display_setup()
     SoC->ADB_ops && SoC->ADB_ops->setup();
 #endif /* USE_OLED */
 
+  } else if (esp32_board == ESP32_LILYGO_T3S3_EPD) {
+#if defined(USE_EPAPER)
+    display = &epd_bn;
+    display->epd2.selectSPI(uSD_SPI, SPISettings(4000000, MSBFIRST, SPI_MODE0));
+
+    if (EPD_setup(true)) {
+
+#if defined(USE_EPD_TASK)
+      Display_Semaphore = xSemaphoreCreateBinary();
+
+      if( Display_Semaphore != NULL ) {
+        xSemaphoreGive( Display_Semaphore );
+      }
+
+      xTaskCreateUniversal(EPD_Task, "EPD", EPD_STACK_SZ, NULL, 1,
+                           &EPD_Task_Handle, CONFIG_ARDUINO_RUNNING_CORE);
+
+      TaskInfoTime = millis();
+#endif /* USE_EPD_TASK */
+      rval = DISPLAY_EPD_1_54;
+    }
+#endif /* USE_EPAPER */
   } else {
 
 #if defined(USE_TFT)
@@ -3745,6 +3926,13 @@ static void ESP32_Display_loop()
     break;
 #endif /* USE_OLED */
 
+#if defined(USE_EPAPER)
+  case DISPLAY_EPD_1_54:
+  case DISPLAY_EPD_2_13:
+    EPD_loop();
+    break;
+#endif /* USE_EPAPER */
+
   case DISPLAY_NONE:
   default:
     break;
@@ -3839,6 +4027,37 @@ static void ESP32_Display_fini(int reason)
     break;
 #endif /* USE_TFT */
 
+#if defined(USE_EPAPER)
+  case DISPLAY_EPD_1_54:
+  case DISPLAY_EPD_2_13:
+
+    EPD_fini(reason, screen_saver);
+
+#if defined(USE_EPD_TASK)
+    if( EPD_Task_Handle != NULL )
+    {
+      vTaskDelete( EPD_Task_Handle );
+    }
+
+    if( Display_Semaphore != NULL )
+    {
+      vSemaphoreDelete( Display_Semaphore );
+    }
+#endif /* USE_EPD_TASK */
+
+    // uSD_SPI.end();
+
+    // pinMode(SOC_GPIO_PIN_T3S3_EPD_MISO, INPUT);
+    // pinMode(SOC_GPIO_PIN_T3S3_EPD_MOSI, INPUT);
+    // pinMode(SOC_GPIO_PIN_T3S3_EPD_SCK,  INPUT);
+    pinMode(SOC_GPIO_PIN_T3S3_EPD_SS,   INPUT);
+    pinMode(SOC_GPIO_PIN_T3S3_EPD_DC,   INPUT);
+    pinMode(SOC_GPIO_PIN_T3S3_EPD_RST,  INPUT);
+    // pinMode(SOC_GPIO_PIN_T3S3_EPD_BUSY, INPUT);
+
+    break;
+#endif /* USE_EPAPER */
+
   case DISPLAY_NONE:
   default:
     break;
@@ -3856,13 +4075,22 @@ static void ESP32_Battery_setup()
 
   } else {
 #if defined(CONFIG_IDF_TARGET_ESP32)
+#if !defined(ESP_IDF_VERSION_MAJOR) || ESP_IDF_VERSION_MAJOR < 5
     calibrate_voltage(hw_info.model == SOFTRF_MODEL_PRIME_MK2 ||
                      (esp32_board == ESP32_TTGO_V2_OLED && hw_info.revision == 16) ?
                      (adc1_channel_t) ADC1_GPIO35_CHANNEL :
                      (adc1_channel_t) ADC1_GPIO36_CHANNEL);
+#else
+    /* TBD */
+#endif /* ESP_IDF_VERSION_MAJOR */
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
+#if !defined(ESP_IDF_VERSION_MAJOR) || ESP_IDF_VERSION_MAJOR < 5
     calibrate_voltage((adc1_channel_t) ADC1_GPIO9_CHANNEL);
+#else
+    /* TBD */
+#endif /* ESP_IDF_VERSION_MAJOR */
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
+#if !defined(ESP_IDF_VERSION_MAJOR) || ESP_IDF_VERSION_MAJOR < 5
     /* use this procedure on T-TWR Plus (has PMU) to calibrate audio ADC */
     if (esp32_board == ESP32_LILYGO_T_TWR2 && hw_info.revision == 0) {
 #if defined(USE_SA8X8)
@@ -3877,15 +4105,28 @@ static void ESP32_Battery_setup()
       calibrate_voltage((adc1_channel_t) ADC1_GPIO1_CHANNEL, ADC_ATTEN_DB_0);
     } else if (esp32_board == ESP32_HELTEC_TRACKER) {
       calibrate_voltage((adc1_channel_t) ADC1_GPIO1_CHANNEL);
+    } else if (esp32_board == ESP32_LILYGO_T3S3_EPD) {
+      calibrate_voltage((adc1_channel_t) ADC1_GPIO1_CHANNEL);
     } else {
       calibrate_voltage((adc1_channel_t) ADC1_GPIO2_CHANNEL);
     }
+#else
+    /* TBD */
+#endif /* ESP_IDF_VERSION_MAJOR */
 #elif defined(CONFIG_IDF_TARGET_ESP32C2)
     calibrate_voltage(SOC_GPIO_PIN_C2_BATTERY);
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
+#if !defined(ESP_IDF_VERSION_MAJOR) || ESP_IDF_VERSION_MAJOR < 5
     calibrate_voltage((adc1_channel_t) ADC1_GPIO1_CHANNEL);
+#else
+    /* TBD */
+#endif /* ESP_IDF_VERSION_MAJOR */
 #elif defined(CONFIG_IDF_TARGET_ESP32C6)
-    calibrate_voltage(SOC_GPIO_PIN_C6_BATTERY);
+    if (esp32_board == ESP32_LILYGO_T3C6) {
+      calibrate_voltage(SOC_GPIO_PIN_T3C6_BATTERY);
+    } else {
+      calibrate_voltage(SOC_GPIO_PIN_C6_BATTERY);
+    }
 #elif defined(CONFIG_IDF_TARGET_ESP32H2)
     /* TBD */
 #else
@@ -3907,6 +4148,8 @@ static float ESP32_Battery_param(uint8_t param)
             hw_info.model == SOFTRF_MODEL_PRIME_MK3  || /* TBD */
             hw_info.model == SOFTRF_MODEL_HAM        || /* TBD */
             hw_info.model == SOFTRF_MODEL_MIDI       || /* TBD */
+            hw_info.model == SOFTRF_MODEL_ECO        || /* TBD */
+            hw_info.model == SOFTRF_MODEL_INK        ||
             /* TTGO T3 V2.1.6 */
            (hw_info.model == SOFTRF_MODEL_STANDALONE && hw_info.revision == 16) ?
             BATTERY_THRESHOLD_LIPO : BATTERY_THRESHOLD_NIMHX2;
@@ -3919,6 +4162,8 @@ static float ESP32_Battery_param(uint8_t param)
             hw_info.model == SOFTRF_MODEL_PRIME_MK3  || /* TBD */
             hw_info.model == SOFTRF_MODEL_HAM        || /* TBD */
             hw_info.model == SOFTRF_MODEL_MIDI       || /* TBD */
+            hw_info.model == SOFTRF_MODEL_ECO        || /* TBD */
+            hw_info.model == SOFTRF_MODEL_INK        ||
             /* TTGO T3 V2.1.6 */
            (hw_info.model == SOFTRF_MODEL_STANDALONE && hw_info.revision == 16) ?
             BATTERY_CUTOFF_LIPO : BATTERY_CUTOFF_NIMHX2;
@@ -3965,9 +4210,10 @@ static float ESP32_Battery_param(uint8_t param)
       voltage = (float) read_voltage();
 
       /* T-Beam v02-v07 and T3 V2.1.6 have voltage divider 100k/100k on board */
-      if (hw_info.model == SOFTRF_MODEL_PRIME_MK2   ||
+      if (hw_info.model == SOFTRF_MODEL_PRIME_MK2 ||
          (esp32_board   == ESP32_TTGO_V2_OLED && hw_info.revision == 16) ||
-          esp32_board   == ESP32_S2_T8_V1_1) {
+          esp32_board   == ESP32_S2_T8_V1_1       ||
+          esp32_board   == ESP32_LILYGO_T3S3_EPD) {
         voltage += voltage;
       } else if (esp32_board == ESP32_C2_DEVKIT ||
                  esp32_board == ESP32_C3_DEVKIT ||
@@ -4056,6 +4302,10 @@ static bool ESP32_Baro_setup()
   } else if (esp32_board == ESP32_LILYGO_T3C6) {
 
     Wire.setPins(SOC_GPIO_PIN_T3C6_SDA, SOC_GPIO_PIN_T3C6_SCL);
+
+  } else if (esp32_board == ESP32_LILYGO_T3S3_EPD) {
+
+    Wire.setPins(SOC_GPIO_PIN_T3S3_SDA, SOC_GPIO_PIN_T3S3_SCL);
 
   } else if (hw_info.model != SOFTRF_MODEL_PRIME_MK2) {
 
@@ -4232,6 +4482,11 @@ void handleMainEvent(AceButton* button, uint8_t eventType,
         OLED_Next_Page();
       }
 #endif /* USE_OLED */
+#if defined(USE_EPAPER)
+      if (button == &button_1 && hw_info.display == DISPLAY_EPD_1_54) {
+        EPD_Mode();
+      }
+#endif /* USE_EPAPER */
 #if defined(USE_SA8X8)
       if (button     == &button_ptt &&
           hw_info.rf == RF_IC_SA8X8 &&
@@ -4290,11 +4545,13 @@ static void ESP32_Button_setup()
        esp32_board == ESP32_S2_T8_V1_1        ||
        esp32_board == ESP32_LILYGO_T_TWR2     ||
        esp32_board == ESP32_HELTEC_TRACKER    ||
+       esp32_board == ESP32_LILYGO_T3S3_EPD   ||
        esp32_board == ESP32_S3_DEVKIT) {
-    button_pin = esp32_board == ESP32_S2_T8_V1_1 ? SOC_GPIO_PIN_T8_S2_BUTTON  :
-                 esp32_board == ESP32_S3_DEVKIT  ? SOC_GPIO_PIN_S3_BUTTON     :
-                 esp32_board == ESP32_HELTEC_TRACKER ? SOC_GPIO_PIN_S3_BUTTON :
-                 esp32_board == ESP32_LILYGO_T_TWR2 ?
+    button_pin = esp32_board == ESP32_S2_T8_V1_1   ? SOC_GPIO_PIN_T8_S2_BUTTON :
+                 esp32_board == ESP32_S3_DEVKIT       ? SOC_GPIO_PIN_S3_BUTTON :
+                 esp32_board == ESP32_HELTEC_TRACKER  ? SOC_GPIO_PIN_S3_BUTTON :
+                 esp32_board == ESP32_LILYGO_T3S3_EPD ? SOC_GPIO_PIN_S3_BUTTON :
+                 esp32_board == ESP32_LILYGO_T_TWR2   ?
                  SOC_GPIO_PIN_TWR2_ENC_BUTTON : SOC_GPIO_PIN_TBEAM_V05_BUTTON;
 
     // Button(s) uses external pull up resistor.
@@ -4353,6 +4610,7 @@ static void ESP32_Button_loop()
       esp32_board == ESP32_S2_T8_V1_1          ||
       esp32_board == ESP32_LILYGO_T_TWR2       ||
       esp32_board == ESP32_HELTEC_TRACKER      ||
+      esp32_board == ESP32_LILYGO_T3S3_EPD     ||
       esp32_board == ESP32_S3_DEVKIT) {
     button_1.check();
 #if defined(USE_SA8X8)
@@ -4368,6 +4626,7 @@ static void ESP32_Button_fini()
   if (esp32_board == ESP32_S2_T8_V1_1        ||
       esp32_board == ESP32_LILYGO_T_TWR2     ||
       esp32_board == ESP32_HELTEC_TRACKER    ||
+      esp32_board == ESP32_LILYGO_T3S3_EPD   ||
       esp32_board == ESP32_S3_DEVKIT) {
     int button_pin = esp32_board == ESP32_S2_T8_V1_1 ? SOC_GPIO_PIN_T8_S2_BUTTON :
                      esp32_board == ESP32_LILYGO_T_TWR2 ?
@@ -4832,13 +5091,13 @@ IODev_ops_t ESP32SX_USBSerial_ops = {
 #if ARDUINO_USB_CDC_ON_BOOT
 #define USBSerial                Serial
 #else
-#if defined(CONFIG_IDF_TARGET_ESP32C6) || defined(CONFIG_IDF_TARGET_ESP32H2)
+#if defined(ESP_IDF_VERSION_MAJOR) && ESP_IDF_VERSION_MAJOR >= 5
 #if HWCDC_SERIAL_IS_DEFINED
 #define USBSerial                HWCDCSerial
 #else
 HWCDC USBSerial;
 #endif /* HWCDC_SERIAL_IS_DEFINED */
-#endif /* CONFIG_IDF_TARGET_ESP32C6  || H2 */
+#endif /* ESP_IDF_VERSION_MAJOR */
 #endif /* ARDUINO_USB_CDC_ON_BOOT */
 
 static void ESP32CX_USB_setup()

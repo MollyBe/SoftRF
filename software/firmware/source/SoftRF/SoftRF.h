@@ -75,6 +75,10 @@
 #define NMEA_UDP_PORT     10110
 #define NMEA_TCP_PORT     2000
 
+//#define GPS_HIGH_RATE // 10Hz GPS-only update rate
+//#define GPS_MEDIUM_RATE // 5Hz GPS-only update rate
+#define EXCLUDE_AIR6
+
 /*
  * Serial I/O default values.
  * Can be overridden by platfrom-specific code.
@@ -85,7 +89,7 @@
  * for most of GNSS modules
  * being used in SoftRF project
  */
-#define SERIAL_IN_BR      9600
+#define SERIAL_IN_BR      115200 // 9600
 #endif
 #if !defined(SERIAL_IN_BITS)
 #define SERIAL_IN_BITS    SERIAL_8N1
@@ -98,7 +102,7 @@
  *
  * Applicable for Standalone Edition. Inherited by most of other SoftRF platforms.
  */
-#define STD_OUT_BR        115200
+#define STD_OUT_BR        115200 // 38400
 #define STD_OUT_BITS      SERIAL_8N1
 
 #if !defined(SERIAL_OUT_BR)
@@ -225,6 +229,9 @@ enum
 	SOFTRF_MODEL_BALKAN,
 	SOFTRF_MODEL_HAM,
 	SOFTRF_MODEL_MIDI,
+	SOFTRF_MODEL_ECO,
+	SOFTRF_MODEL_INK,
+	SOFTRF_MODEL_NEO,
 };
 
 enum

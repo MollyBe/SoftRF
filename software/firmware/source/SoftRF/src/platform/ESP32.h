@@ -154,6 +154,8 @@ extern Adafruit_NeoPixel strip;
 
 #define SOC_GPIO_PIN_STATUS   (hw_info.model == SOFTRF_MODEL_MIDI      ?\
                                 SOC_GPIO_PIN_HELTRK_LED :               \
+                               hw_info.model == SOFTRF_MODEL_ECO       ?\
+                                SOC_GPIO_PIN_T3C6_LED :                 \
                                hw_info.model != SOFTRF_MODEL_PRIME_MK2 ?\
                                 SOC_UNUSED_PIN :                        \
                                 (hw_info.revision == 2 ?                \
@@ -172,7 +174,9 @@ extern Adafruit_NeoPixel strip;
                                     SOC_UNUSED_PIN) :                     \
                                 (hw_info.model == SOFTRF_MODEL_MIDI ?     \
                                   SOC_GPIO_PIN_HELTRK_GNSS_PPS :          \
-                                  SOC_UNUSED_PIN)))
+                                (hw_info.model == SOFTRF_MODEL_ECO ?      \
+                                  SOC_GPIO_PIN_T3C6_GNSS_PPS :            \
+                                  SOC_UNUSED_PIN))))
 
 #define SOC_GPIO_PIN_BUZZER   (hw_info.model == SOFTRF_MODEL_PRIME_MK2 ? \
                                 SOC_UNUSED_PIN :                         \
@@ -248,6 +252,7 @@ extern Adafruit_NeoPixel strip;
 #include "iomap/Heltec_Tracker.h"
 #include "iomap/WT0132C6.h"
 #include "iomap/LilyGO_T3C6.h"
+#include "iomap/LilyGO_T3S3_EPD.h"
 
 enum rst_reason {
   REASON_DEFAULT_RST      = 0,  /* normal startup by power on */
@@ -275,6 +280,14 @@ enum esp32_board_id {
   ESP32_LILYGO_T_TWR2,
   ESP32_HELTEC_TRACKER,
   ESP32_LILYGO_T3C6,
+  ESP32_LILYGO_T3S3_EPD,
+};
+
+enum ep_model_id {
+	EP_UNKNOWN,
+	EP_GDEW027W3,
+	EP_GDEY027T91,
+	EP_DEPG0213BN,
 };
 
 /* https://github.com/espressif/usb-pids/blob/main/allocated-pids.txt#L313 */
@@ -285,6 +298,7 @@ enum softrf_usb_pid {
   SOFTRF_USB_PID_UF2_BOOT   = 0x8134,
   SOFTRF_USB_PID_HAM        = 0x818F,
   SOFTRF_USB_PID_MIDI       = 0x81A0,
+  SOFTRF_USB_PID_INK        = 0x820A,
 };
 
 struct rst_info {
@@ -418,6 +432,7 @@ extern const USB_Device_List_t supported_USB_devices[];
 #define EXCLUDE_TEST_MODE
 #define EXCLUDE_WATCHOUT_MODE
 #undef USE_NMEALIB
+#undef USE_BLE_MIDI
 #undef ENABLE_PROL
 //#define USE_NIMBLE
 #endif /* C2 || C6 || H2 */
@@ -431,6 +446,8 @@ extern const USB_Device_List_t supported_USB_devices[];
 /* Experimental */
 #define ENABLE_REMOTE_ID
 //#define EXCLUDE_VOICE_MESSAGE
+//#define USE_EPAPER
+//#define USE_EPD_TASK
 #endif /* S3 */
 
 #if defined(CONFIG_IDF_TARGET_ESP32S2)
@@ -456,6 +473,12 @@ extern const USB_Device_List_t supported_USB_devices[];
 #define U8X8_OLED_I2C_BUS_TYPE  U8X8_SSD1306_128X64_NONAME_2ND_HW_I2C
 #endif /* CONFIG_IDF_TARGET_ESP32S3 */
 #endif /* USE_OLED */
+
+#if defined(USE_EPAPER)
+typedef void EPD_Task_t;
+
+extern const char *Hardware_Rev[];
+#endif /* USE_EPAPER */
 
 #endif /* PLATFORM_ESP32_H */
 

@@ -67,6 +67,7 @@ enum nRF52_board_id {
   NRF52_LILYGO_TECHO_REV_0,     /* 20-8-6 */
   NRF52_LILYGO_TECHO_REV_1,     /* 2020-12-12 */
   NRF52_LILYGO_TECHO_REV_2,     /* 2021-3-26 */
+  NRF52_LILYGO_TULTIMA,
 };
 
 enum nRF52_display_id {
@@ -74,6 +75,7 @@ enum nRF52_display_id {
   EP_GDEH0154D67,
   EP_GDEP015OC1,
   EP_DEPG0150BN,
+  EP_GDEW0371W7,
 };
 
 typedef struct {
@@ -104,6 +106,7 @@ struct rst_info {
 #define DFU_MAGIC_SKIP        (0x6d)
 #define BME280_ADDRESS        (0x77)
 #define MPU9250_ADDRESS       (0x68)
+#define ICM20948_ADDRESS      (0x68)
 
 #if defined(ARDUINO_ARCH_MBED)
 #define PCF8563_SLAVE_ADDRESS (0x51)
@@ -249,6 +252,9 @@ struct rst_info {
 /* RTC */
 #define SOC_GPIO_PIN_R_INT    _PINNUM(0, 16) // P0.16
 
+#define SOC_GPIO_PMU_SDA      _PINNUM(1,  0) // P1.00
+#define SOC_GPIO_PMU_SCL      _PINNUM(0, 24) // P0.24
+
 #define EXCLUDE_WIFI
 //#define EXCLUDE_OTA
 //#define USE_ARDUINO_WIFI
@@ -326,6 +332,7 @@ struct rst_info {
 #define EXCLUDE_IMU
 #endif /* ARDUINO_ARCH_MBED */
 //#define USE_EXT_I2S_DAC
+#define EXCLUDE_PMU
 
 /* FTD-012 data port protocol version 8 and 9 */
 #define PFLAA_EXT1_FMT  ",%d,%d,%d"
