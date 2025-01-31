@@ -1,6 +1,6 @@
 /*
  * Platform_STM32.h
- * Copyright (C) 2019-2024 Linar Yusupov
+ * Copyright (C) 2019-2025 Linar Yusupov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,6 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #if defined(ARDUINO_ARCH_STM32)
+
+#define EXCLUDE_AIR6
 
 #ifndef PLATFORM_STM32_H
 #define PLATFORM_STM32_H
@@ -44,9 +46,10 @@ extern char *dtostrf_workaround(double, signed char, unsigned char, char *);
 #define uni_Color(r,g,b)        strip.Color(r,g,b)
 #define color_t                 uint32_t
 
-#define yield()                 ({ })
 #define snprintf_P              snprintf
 #define EEPROM_commit()         {}
+
+inline  void yield()            { };
 
 #define AN3155_BR               115200
 #define AN3155_BITS             SERIAL_8E1
@@ -153,12 +156,14 @@ typedef struct stm32_backup_struct {
 #define EXCLUDE_GNSS_GOKE
 #define EXCLUDE_GNSS_AT65
 #define EXCLUDE_GNSS_UC65
+#define EXCLUDE_GNSS_AG33
 
 #define USE_OLED                 //  +3.5 kb
 //#define EXCLUDE_OLED_049
 //#define EXCLUDE_OLED_BARO_PAGE
 #define USE_NMEA_CFG             //  +2.5 kb
 #define EXCLUDE_BME680           //  -    kb
+#define EXCLUDE_BME280AUX        //  -    kb
 #define EXCLUDE_MPL3115A2        //  -  1 kb
 #define EXCLUDE_NRF905           //  -  2 kb
 #define EXCLUDE_EGM96            //  - 16 kb
@@ -171,13 +176,20 @@ typedef struct stm32_backup_struct {
 //#define USE_OGN_ENCRYPTION
 #define EXCLUDE_LK8EX1
 #define EXCLUDE_IMU
+//#define USE_RADIOLIB
+//#define EXCLUDE_LR11XX
+#define EXCLUDE_CC1101
+#define EXCLUDE_SI443X
+#define EXCLUDE_SX1231
 
 //#define ENFORCE_S78G
 #define USE_TIME_SLOTS
 
 /* Experimental */
 #define ENABLE_ADSL              //  +  2 kb
+#if !defined(USE_RADIOLIB)
 #define ENABLE_PROL              //  + 18 kb
+#endif /* USE_RADIOLIB */
 
 /* Secondary target ("Blue pill") */
 #elif defined(ARDUINO_BLUEPILL_F103CB)
@@ -203,6 +215,7 @@ typedef struct stm32_backup_struct {
 #define EXCLUDE_GNSS_GOKE
 #define EXCLUDE_GNSS_AT65
 #define EXCLUDE_GNSS_UC65
+#define EXCLUDE_GNSS_AG33
 //#define EXCLUDE_LOG_GNSS_VERSION
 
 /* Component                         Cost */
@@ -215,6 +228,7 @@ typedef struct stm32_backup_struct {
 //#define EXCLUDE_BMP180         //  -  1 kb
 //#define EXCLUDE_BMP280         //  -  2 kb
 #define EXCLUDE_BME680           //  -    kb
+#define EXCLUDE_BME280AUX        //  -    kb
 #define EXCLUDE_MPL3115A2        //  -  1 kb
 #define EXCLUDE_NRF905           //  -  2 kb
 #define EXCLUDE_UATM             //  -    kb
@@ -259,6 +273,7 @@ typedef struct stm32_backup_struct {
 #define EXCLUDE_GNSS_GOKE
 #define EXCLUDE_GNSS_AT65
 #define EXCLUDE_GNSS_UC65
+#define EXCLUDE_GNSS_AG33
 
 /* Component                         Cost */
 /* -------------------------------------- */
@@ -269,6 +284,7 @@ typedef struct stm32_backup_struct {
 #define EXCLUDE_BMP180           //  -  1 kb
 //#define EXCLUDE_BMP280         //  -  2 kb
 #define EXCLUDE_BME680           //  -    kb
+#define EXCLUDE_BME280AUX        //  -    kb
 #define EXCLUDE_MPL3115A2        //  -  1 kb
 #define EXCLUDE_NRF905           //  -  2 kb
 #define EXCLUDE_UATM             //  -    kb
@@ -281,6 +297,11 @@ typedef struct stm32_backup_struct {
 
 #define USE_BASICMAC             //  +  7 kb
 #define EXCLUDE_SX1276           //  -  3 kb
+//#define USE_RADIOLIB
+//#define EXCLUDE_LR11XX
+#define EXCLUDE_CC1101
+#define EXCLUDE_SI443X
+#define EXCLUDE_SX1231
 
 #define USE_TIME_SLOTS
 #define USE_OGN_ENCRYPTION
@@ -313,6 +334,7 @@ typedef struct stm32_backup_struct {
 #define EXCLUDE_GNSS_GOKE
 #define EXCLUDE_GNSS_AT65
 #define EXCLUDE_GNSS_UC65
+#define EXCLUDE_GNSS_AG33
 
 /* Component                         Cost */
 /* -------------------------------------- */
@@ -323,6 +345,7 @@ typedef struct stm32_backup_struct {
 #define EXCLUDE_BMP180           //  -  1 kb
 //#define EXCLUDE_BMP280         //  -  2 kb
 #define EXCLUDE_BME680           //  -    kb
+#define EXCLUDE_BME280AUX        //  -    kb
 #define EXCLUDE_MPL3115A2        //  -  1 kb
 #define EXCLUDE_NRF905           //  -  2 kb
 #define EXCLUDE_UATM             //  -    kb
@@ -335,6 +358,11 @@ typedef struct stm32_backup_struct {
 
 #define USE_BASICMAC             //  +  7 kb
 #define EXCLUDE_SX1276           //  -  3 kb
+//#define USE_RADIOLIB
+//#define EXCLUDE_LR11XX
+#define EXCLUDE_CC1101
+#define EXCLUDE_SI443X
+#define EXCLUDE_SX1231
 
 #define USE_TIME_SLOTS
 

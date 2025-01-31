@@ -1,6 +1,6 @@
 /*
  * LEDHelper.h
- * Copyright (C) 2016-2024 Linar Yusupov
+ * Copyright (C) 2016-2025 Linar Yusupov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -72,6 +72,8 @@ enum
 	DISPLAY_TFT_PORTAPACK,
 	DISPLAY_EPD_2_7,
 	DISPLAY_EPD_1_54,
+	DISPLAY_EPD_2_13,
+	DISPLAY_EPD_3_71,
 };
 
 void LED_setup();

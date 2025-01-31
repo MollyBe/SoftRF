@@ -1,6 +1,6 @@
 /*
  * WiFiHelper.cpp
- * Copyright (C) 2016-2024 Linar Yusupov
+ * Copyright (C) 2016-2025 Linar Yusupov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -43,8 +43,8 @@ String station_psk  = MY_ACCESSPOINT_PSK ;
 
 String host_name = HOSTNAME;
 
-IPAddress local_IP(192,168,4,1);
-IPAddress gateway(192,168,4,1);
+IPAddress local_IP(192,168,1,1);
+IPAddress gateway(192,168,1,1);
 IPAddress subnet(255,255,255,0);
 
 /**
@@ -110,9 +110,11 @@ void Raw_Transmit_UDP()
 #if defined(USE_ARDUINO_WIFI)
 void WiFi_setup()
 {
+  char id_06x[8];
+  snprintf(id_06x, sizeof(id_06x),"%06x", SoC->getChipId() & 0x00FFFFFFU);
   // Set Hostname.
   host_name += "-";
-  host_name += String((SoC->getChipId() & 0xFFFFFF), HEX);
+  host_name += String(id_06x);
 
   // check for the WiFi module:
   if (WiFi.status() == WL_NO_MODULE) {
@@ -219,11 +221,14 @@ void WiFi_setup()
  */
 void WiFi_setup()
 {
+  char id_06x[8];
+  snprintf(id_06x, sizeof(id_06x),"%06x", SoC->getChipId() & 0x00FFFFFFU);
   // Set Hostname.
   host_name += "-";
-  host_name += String((SoC->getChipId() & 0xFFFFFF), HEX);
+  host_name += String(id_06x);
 
-  if (SoC->id == SOC_ESP8266 || SoC->id == SOC_RP2040) {
+  if (SoC->id == SOC_ESP8266    || SoC->id == SOC_RP2040 ||
+      SoC->id == SOC_RP2350_ARM || SoC->id == SOC_RP2350_RISC) {
     WiFi.mode(WIFI_STA);
     if (SoC->WiFi_hostname(host_name) == false) {
       return;

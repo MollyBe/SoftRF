@@ -1,6 +1,6 @@
 /*
  * GNSSHelper.cpp
- * Copyright (C) 2016-2024 Linar Yusupov
+ * Copyright (C) 2016-2025 Linar Yusupov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -75,7 +75,8 @@ const char *GNSS_name[] = {
   [GNSS_MODULE_AT65]    = "AT65",
   [GNSS_MODULE_MT33]    = "MT33",
   [GNSS_MODULE_GOKE]    = "GOKE",
-  [GNSS_MODULE_UC65]    = "UC65"
+  [GNSS_MODULE_UC65]    = "UC65",
+  [GNSS_MODULE_AG33]    = "AG33"
 };
 
 #if defined(ENABLE_GNSS_STATS)
@@ -85,7 +86,8 @@ const char *GNSS_name[] = {
  * Goke: GGA - 185+, RMC - 265+
  * Neo6: GGA - 138 , RMC -  67
  * MT33: GGA -  48 , RMC - 175
- * UC65: GGA - TBD , RMC - TBD
+ * UC65: GGA -  35 , RMC -  29
+ * AG33: GGA - TBD , RMC - TBD
  */
 
 gnss_stat_t gnss_stats;
@@ -1142,9 +1144,142 @@ const gnss_chip_ops_t uc65_ops = {
   uc65_setup,
   uc65_loop,
   uc65_fini,
-  0 /* GGA */, 0 /* RMC */
+  35 /* GGA */, 29 /* RMC */
 };
 #endif /* EXCLUDE_GNSS_UC65 */
+
+#if !defined(EXCLUDE_GNSS_AG33)
+static gnss_id_t ag33_probe()
+{
+  /* Firmware version request */
+  return nmea_handshake("$PAIR021*39\r\n", "$PAIR001,021", false) ?
+                        GNSS_MODULE_AG33 : GNSS_MODULE_NMEA;
+}
+
+extern gnss_chip_ops_t ag33_ops;
+
+static bool ag33_setup()
+{
+#if !defined(EXCLUDE_LOG_GNSS_VERSION)
+  int i=0;
+  char c;
+  unsigned long timeout_ms = 2000 ;
+
+  while (Serial_GNSS_In.available() > 0) { Serial_GNSS_In.read(); }
+
+  unsigned long start_time = millis();
+
+  while ((millis() - start_time) < timeout_ms) {
+    c = Serial_GNSS_In.read();
+    if (c == '\n') break;
+  }
+
+  Serial_GNSS_Out.write("$PAIR021*39\r\n");
+
+  start_time = millis();
+
+  while ((millis() - start_time) < timeout_ms) {
+    c = Serial_GNSS_In.read();
+    if (c == '\n') break;
+  }
+
+  /* take response into buffer */
+  while ((millis() - start_time) < timeout_ms) {
+
+    c = Serial_GNSS_In.read();
+
+    if (isPrintable(c) || c == '\r' || c == '\n') {
+      if (i >= sizeof(GNSSbuf) - 1) break;
+      GNSSbuf[i++] = c;
+    } else {
+      /* ignore */
+      continue;
+    }
+
+    if (c == '\n') break;
+  }
+
+  GNSSbuf[i] = 0;
+
+  size_t len = strlen((char *) &GNSSbuf[0]);
+
+  if (len > 9) {
+    for (int i=9; i < len; i++) {
+      if (GNSSbuf[i] == ',' && GNSSbuf[i-1] == ',' && GNSSbuf[i-2] == ',') {
+        GNSSbuf[i-2] = 0;
+        break;
+      }
+    }
+    Serial.print(F("INFO: GNSS ident - "));
+    Serial.println((char *) &GNSSbuf[9]);
+  }
+
+  delay(250);
+#endif
+
+  // Serial_GNSS_Out.write("$PAIR002*38\r\n"); /* Powers on the GNSS system */
+  // delay(250);
+
+  /* GPS + GLONASS + Galileo + BeiDou + QZSS */
+  Serial_GNSS_Out.write("$PAIR066,1,1,1,1,1,0*3B\r\n");         delay(250);
+
+  Serial_GNSS_Out.write("$PAIR062,0,1*3F\r\n");   /* GGA 1s */  delay(250);
+  Serial_GNSS_Out.write("$PAIR062,4,1*3B\r\n");   /* RMC 1s */  delay(250);
+
+  Serial_GNSS_Out.write("$PAIR062,1,0*3F\r\n");   /* GLL OFF */ delay(250);
+  Serial_GNSS_Out.write("$PAIR062,3,0*3D\r\n");   /* GSV OFF */ delay(250);
+  Serial_GNSS_Out.write("$PAIR062,5,0*3B\r\n");   /* VTG OFF */ delay(250);
+  Serial_GNSS_Out.write("$PAIR062,6,0*38\r\n");   /* ZDA OFF */ delay(250);
+#if defined(NMEA_TCP_SERVICE)
+  if (settings->s.nmea_out == NMEA_TCP ||       // SD
+      settings->s.nmea_out == NMEA_BLUETOOTH) { // SD
+    Serial_GNSS_Out.write("$PAIR062,2,1*3D\r\n"); /* GSA 1s */
+  }
+  else
+#endif /* NMEA_TCP_SERVICE */
+  {
+    Serial_GNSS_Out.write("$PAIR062,2,0*3C\r\n"); /* GSA OFF */
+  }
+  delay(250);
+
+  /*
+   * 0 = Normal mode
+   * For general purposes.
+   *
+   * 3 = Balloon mode
+   * Used for high-altitude balloon scenario where
+   * the vertical movement has a greater impact on the position
+   * calculation.
+   *
+   * 5 = Drone mode
+   * Used for drone applications with equivalent
+   * dynamic range and vertical acceleration at different flight phases
+   * (for example, hovering and cruising)
+   */
+  Serial_GNSS_Out.write("$PAIR080,0*2E\r\n"); /* Normal Mode */ delay(250);
+
+  return true;
+}
+
+static void ag33_loop()
+{
+
+}
+
+static void ag33_fini()
+{
+  Serial_GNSS_Out.write("$PAIR003*39\r\n"); /* Powers off the GNSS system */
+  delay(250);
+}
+
+/* const */ gnss_chip_ops_t ag33_ops = {
+  ag33_probe,
+  ag33_setup,
+  ag33_loop,
+  ag33_fini,
+  90 /* GGA */, 100 /* RMC */
+};
+#endif /* EXCLUDE_GNSS_AG33 */
 
 static bool GNSS_fix_cache = false;
 
@@ -1163,11 +1298,17 @@ byte GNSS_setup() {
       hw_info.model == SOFTRF_MODEL_PRIME_MK3 ||
       hw_info.model == SOFTRF_MODEL_UNI       ||
       hw_info.model == SOFTRF_MODEL_BADGE     ||
+      hw_info.model == SOFTRF_MODEL_ACADEMY   ||
       hw_info.model == SOFTRF_MODEL_LEGO      ||
       hw_info.model == SOFTRF_MODEL_ES        ||
       hw_info.model == SOFTRF_MODEL_BALKAN    ||
       hw_info.model == SOFTRF_MODEL_HAM       ||
-      hw_info.model == SOFTRF_MODEL_MIDI)
+      hw_info.model == SOFTRF_MODEL_MIDI      ||
+      hw_info.model == SOFTRF_MODEL_ECO       ||
+      hw_info.model == SOFTRF_MODEL_INK       ||
+      hw_info.model == SOFTRF_MODEL_CARD      ||
+      hw_info.model == SOFTRF_MODEL_COZY      ||
+      hw_info.model == SOFTRF_MODEL_NEO)
   {
     // power on by wakeup call
     Serial_GNSS_Out.write((uint8_t) 0); GNSS_FLUSH(); delay(500);
@@ -1222,10 +1363,6 @@ byte GNSS_setup() {
   gnss_id = gnss_id == GNSS_MODULE_NMEA ?
             (gnss_chip = &mtk_ops,    gnss_chip->probe()) : gnss_id;
 #endif /* EXCLUDE_GNSS_MTK */
-#if !defined(EXCLUDE_GNSS_GOKE)
-  gnss_id = gnss_id == GNSS_MODULE_NMEA ?
-            (gnss_chip = &goke_ops,   gnss_chip->probe()) : gnss_id;
-#endif /* EXCLUDE_GNSS_GOKE */
 #if !defined(EXCLUDE_GNSS_AT65)
   gnss_id = gnss_id == GNSS_MODULE_NMEA ?
             (gnss_chip = &at65_ops,   gnss_chip->probe()) : gnss_id;
@@ -1234,6 +1371,14 @@ byte GNSS_setup() {
   gnss_id = gnss_id == GNSS_MODULE_NMEA ?
             (gnss_chip = &uc65_ops,   gnss_chip->probe()) : gnss_id;
 #endif /* EXCLUDE_GNSS_UC65 */
+#if !defined(EXCLUDE_GNSS_AG33)
+  gnss_id = gnss_id == GNSS_MODULE_NMEA ?
+            (gnss_chip = &ag33_ops,   gnss_chip->probe()) : gnss_id;
+#endif /* EXCLUDE_GNSS_AG33 */
+#if !defined(EXCLUDE_GNSS_GOKE)
+  gnss_id = gnss_id == GNSS_MODULE_NMEA ?
+            (gnss_chip = &goke_ops,   gnss_chip->probe()) : gnss_id;
+#endif /* EXCLUDE_GNSS_GOKE */
 
   gnss_chip = gnss_id == GNSS_MODULE_NMEA ? &generic_nmea_ops : gnss_chip;
 
@@ -1247,7 +1392,12 @@ byte GNSS_setup() {
 #else
     int interrupt_num = digitalPinToInterrupt(SOC_GPIO_PIN_GNSS_PPS);
     if (interrupt_num != NOT_AN_INTERRUPT) {
+#if defined(plat_attachInterrupt_func)
+      plat_attachInterrupt_func(SOC_GPIO_PIN_GNSS_PPS, SoC->GNSS_PPS_handler,
+                                RISING);
+#else
       attachInterrupt(interrupt_num, SoC->GNSS_PPS_handler, RISING);
+#endif /* plat_attachInterrupt_func */
     }
 #endif
 #endif

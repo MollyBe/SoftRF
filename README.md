@@ -1,13 +1,34 @@
-## ATTENTION: it is strongly recommended to only use the following open standards based protocols: ADS-L, OGN or FANET
-## ATTENTION: only T-Beam S3 Supreme and T-Echo UF2 binaries are provided/tested on a regular basis
-## ATTENTION: it is recommended to migrate to the following OGN/ADS-L/FANET tracker implementation: https://github.com/pjalocha/ogn-tracker
+# As of February 2025 this fork will no longer be maintained and therefore be archived and changed to read-only.
+# It is recommended to consider the following Stratux compatible alternatives:
+- GXAirCom: FANET+ (FANET+FLARM): https://github.com/gereic/GXAirCom
+  - only for **T-Beam** and **T-Beam S3 Supreme**
+  - transmission of FANET and FLARM simultaneously
+- ADS-L/OGN/FANET/PAW tracker implementation: https://github.com/pjalocha/ogn-tracker
+  - only for **T-Beam** and **T-Beam S3 Supreme**
+  - transmission of ADS-L/OGN/FANET/PAW simultaneously
+- SoftRF fork with a lot of enhancements: https://github.com/moshe-braner/SoftRF
+  - only for **T-Beam** and **T-Echo**
+## SoftRF fork
+- for Stratux use via USB: **T-Beam**, **T-Beam S3 Supreme**
+- for SkyDemon use via BLE: **T-Beam**, **T-Beam S3 Supreme**, **T-Echo** and **Seeed T1000-E**
+## ATTENTION: it is strongly recommended to only use the following open standards based protocols (LEGACY protocol is broken and won't be fixed):
+- ADS-L (default for all platforms)
+- OGN
+- FANET
+## ATTENTION: only ESP32 (T-Beam, T-Beam S3 Supreme) and nRF52 (T-Echo, T1000-E) binaries are provided/tested on a regular basis, they are provided as Github Actions Artifacts - a Github account is required to download them
+## ATTENTION: Seeed T1000-E comes with pre-installed Meshtastic and needs to be prepared before flashing SoftRF for the first time (see: https://github.com/lyusupov/SoftRF/wiki/Card-Edition.-Quick-start)
+### General Features:
+- option to enter `AircraftID` (through SoftRF WiFi settings page: http://192.168.1.1/settings or via serial connection, see below)
+  - if added (`AircraftID: <ICAO hex Code>`), then ADDR_TYPE_ICAO is set (this is based on the assumtion that your airplane has a transponder)
+  - if **not** added, then the SoftRF factory ID remains (`AircraftID: 0`) and ADDR_TYPE_FLARM is set
 
-## Features
-- enable SoftRF to work as a proper GPS and Baro source for Stratux (through USB)
-- change SoftRF WiFi IP from `192.168.1.1` to `192.168.4.1` to avoid conflicts with Stratux WiFi IP
-- option to enter `AircraftID` (through SoftRF WiFi settings page: http://192.168.4.1/settings)
-  - if added (`AircraftID: ICAO hex code`), then ADDR_TYPE_ICAO is set for both Legacy and OGN (this is based on the assumtion that your airplane has a transponder)
-  - if **not** added, the SoftRF factory ID remains (`AircraftID: 0`) and ADDR_TYPE is set according to the selected protocol (this is recommended for all airplanes without a transponder)
+### T-Beam and T-Beam S3 Supreme Features:
+- **USB mode** (default): enables SoftRF to work as a proper GNSS and Baro source for Stratux
+- **Bluetooth LE mode**: enables SoftRF to work as a proper traffic rx/tx and GNSS source for SkyDemon (since version 4.0.0), please use the following settings:
+  - ![1](https://github.com/user-attachments/assets/93e70aa7-cf88-4eaa-ad6e-fd0072773417)
+
+### T-Echo and Seeed T1000-E Features:
+- **Bluetooth LE mode** (enabled by default): enables SoftRF to work as a proper traffic rx/tx and GNSS source for SkyDemon
 
 ## UF2 Binaries
 UF2 binaries are available for the following platforms and can be downloaded as part of **`SoftRF.zip`** from here: https://github.com/VirusPilot/SoftRF/actions (click on the latest workflow run and download **`SoftRF.zip`** "Artifact"):
@@ -16,57 +37,60 @@ UF2 binaries are available for the following platforms and can be downloaded as 
 - connect your T-Beam S3 Supreme to your PC and put it in UF2 upload mode (press **RESET** and shortly thereafter **BOOT**)
 - upload the `SoftRF.zip/esp32.esp32.esp32s3/SoftRF.ino.uf2` file to the TBEAMBOOT drive, see also: https://github.com/lyusupov/SoftRF/blob/master/software/firmware/binaries/README.md#esp32-s3
 
-**T-Echo - UF2 update method** (aka. USB Mass Storage method):
-- connect your T-Echo to your PC and put it in UF2 upload mode (double-click **RESET**)
-- upload the `SoftRF.zip/adafruit.nrf52.pca10056/SoftRF.ino.uf2` file to the **NRF52BOOT** or **TECHBOOT** drive that shows up on your PC, see also: https://github.com/lyusupov/SoftRF/blob/master/software/firmware/binaries/README.md#nrf52840
+**T-Echo and T1000-E - UF2 update method** (aka. USB Mass Storage method):
+- connect your T-Echo or T1000-E to your PC and put it in UF2 upload mode (T-Echo: double-click RESET, T1000-E: press and hold the device button, then quickly connect the charging cable twice)
+- upload the `SoftRF.zip/adafruit.nrf52.pca10056/SoftRF.ino.uf2` file to the **NRF52BOOT**, **TECHBOOT** or **T1000-E** drive that shows up on your PC, see also: https://github.com/lyusupov/SoftRF/blob/master/software/firmware/binaries/README.md#nrf52840
 
-**Please be aware that flashing these binaries on your SoftRF device may render it unusable**
+## "classic" T-Beam Binaries
+"classic" binaries are available for the **T-Beam up to v1.2** and can be downloaded as part of **`SoftRF.zip`** from here: https://github.com/VirusPilot/SoftRF/actions (click on the latest workflow run and download **`SoftRF.zip`** "Artifact"):
+- connect your T-Beam to your PC (via USB)
+- open https://espressif.github.io/esp-launchpad/ with your **Chrome** browser, select "DIY" and "connect" your T-Beam
+- it may be necessary the execute "Erase Flash" once
+- upload all files from the `SoftRF.zip/esp32.esp32.esp32` folder according to the following order and execute "Program":
+![Chrome T-Beam Flash Tool](https://github.com/VirusPilot/SoftRF/assets/43483458/bc84d81f-a71f-46e7-a4d8-c7c2ff45bc2e)
 
-## T-Beam S3 Supreme modifications:
-- u-blox GPS configuration:
-  - enable GSA, GSV, VTG, GST
-  - enable GPS, GALILEO, BEIDOU and SBAS
+## T-Beam and T-Beam S3 Supreme modifications:
+- u-blox GNSS configuration:
+  - enable GSA, GSV, VTG, GST (in addition to GGA and RMC)
+  - enable GPS, GALILEO, BEIDOU and SBAS (u-blox 10 default)
   - enable NMEA extended protocol
-- LEGACY NMEA traffic messages are disabled (to relax data rate, Stratux receives LEGACY directly anyhow)
-- default connection with Stratux: **USB** (115200 baud), the USB T-Beam connection with Stratux works best if `init_uart_baud=115200` is added to the `/boot/config.txt` file on the Raspberry Pi
-- WiFi IP changed to `192.168.4.1` to avoid conflicts with Stratux WiFi IP
+- default connection with Stratux: **USB** (115200 baud), the USB T-Beam connection with Stratux works best if `init_uart_baud=115200` is added to the `/boot/config.txt` file on the Raspberry Pi (`/boot/firmware/config.txt` for Bookworm)
 
-## T-Echo modifications:
-- L76K GPS configuration:
-  - enable GSA, GSV, VTG, GST
-  - enable GPS, GLONASS and BEIDOU
-  - NMEA output through USB (instead of Bluetooth)
-- default connection with Stratux: **USB** (115200 baud), the USB T-Echo connection with Stratux works best if `init_uart_baud=115200` is added to the `/boot/config.txt` file on the Raspberry Pi
-- LK8EX1 and LEGACY traffic messages over serial connection are disabled (to relax data rate, Stratux receives LEGACY directly anyhow)
+## T-Echo and Seeed T1000-E modifications:
+- GSA messges enabled (in addition to GGA and RMC)
+- LK8EX1 and HEARTBEAT messages are disabled
 
 ## Limitations:
-- GPS update rate is limited to 1 Hz in SoftRF, which is good enough for Stratux except when using GPS as a pseudo AHRS (internally all u-blox based T-Beams use 10Hz measurement rate)
-- the L76K only supports the NMEA "strict" protocol version, therefore some extended satellite information (like elevation, azimut and numbering) is not provided for some satellites and therefore the GPS info page in Stratux is incomplete. Furthermore BEIDOU satellites are not displayed at all but are in fact used and counted for "in solution"
-- if your T-Beam S3 Supreme or T-Echo has a baro sensor (e.g. BMP280) included, you can omit your Stratux baro module as SoftRF is providing the baro altitude to your Stratux
+- GNSS update rate is limited to 1 Hz in SoftRF, which is good enough for Stratux except when using GNSS as a pseudo AHRS (internally all u-blox based T-Beams use 10Hz measurement rate)
+- the L76K only supports the NMEA "strict" protocol version, therefore some extended satellite information (like elevation, azimut and numbering) is not provided for some satellites and therefore the GNSS info page in Stratux is incomplete. Furthermore BEIDOU satellites are not displayed at all but are in fact used and counted for "in solution"
+- if your T-Beam or T-Echo has a baro sensor (e.g. BMP280) included, you can omit your Stratux baro module as SoftRF is providing the baro altitude to your Stratux
 
 ## Recommendations for T-Beam S3 Supreme:
-- load OGN database: https://github.com/lyusupov/SoftRF/wiki/Prime-Edition-MkIII#aircrafts-database
-- modify SoftRF settings (https://github.com/lyusupov/SoftRF/wiki/Settings), using the SoftRF WiFi settings page: http://192.168.4.1/settings
+- load OGN database: https://github.com/lyusupov/SoftRF/wiki/Prime-Edition-MkIII.-Aircrafts-database
+- modify SoftRF settings (https://github.com/lyusupov/SoftRF/wiki/Settings), using the SoftRF WiFi settings page: http://192.168.1.1/settings
 
-## Recommendations for T-Echo:
-- load OGN database: https://github.com/lyusupov/SoftRF/wiki/Badge-Edition.-Aircrafts-database
-- modify SoftRF settings (https://github.com/lyusupov/SoftRF/wiki/Settings) by **downloading** the following scripts, **opening** them in a browser to generate the appropriate $PSRFC and $PSKVC sentences and then **sending** these generated sentences to the SoftRF device via a serial USB console (e.g. Arduino IDE comes with a nice built in serial USB console):
+## Recommendations for T-Beam:
+- modify SoftRF settings (https://github.com/lyusupov/SoftRF/wiki/Settings), using the SoftRF WiFi settings page: http://192.168.1.1/settings
+
+## Recommendations for T-Echo and T1000-E:
+- modify SoftRF settings (https://github.com/lyusupov/SoftRF/wiki/Settings) by **downloading** the following scripts, **opening** them in a browser to generate the appropriate $PSRFC sentences and then **sending** these generated sentences to the SoftRF device via a serial USB console (e.g. Arduino IDE comes with a nice built in serial USB console) or via a BLE serial terminal:
   - https://github.com/VirusPilot/SoftRF/blob/master/software/app/Settings/basic.html (e.g. Protocol, Aircraft type, Aircraft ID)
-  - https://github.com/VirusPilot/SoftRF/blob/master/software/app/Settings/ui.html (e.g. Units, e-Paper 'ghosts' removal)
 
 ## DANGER ZONE - NOT RECOMMENDED FOR UNEXPERIENCED USERS
 ## Compiling/Flashing from Source Code
 You need to be familiar with Arduino to compile and flash it for your platform. You need to install the latest version of **Arduino IDE** and add the following two entries into the Additional Board Manager URLs:
 - **T-Beam and T-Beam S3 Supreme**: `https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json`
-- **T-Echo**: `https://adafruit.github.io/arduino-board-index/package_adafruit_index.json`
+- **T-Echo** and **T1000-E**: `https://adafruit.github.io/arduino-board-index/package_adafruit_index.json`
 
 ### Arduino IDE settings for T-Beam
+- based on https://github.com/Xinyuan-LilyGO/LilyGo-LoRa-Series?tab=readme-ov-file#3%EF%B8%8F⃣arduino-ide-quick-start
+- Install "esp32 by Espressif" version 2.0.9 under "BOARDS MANAGER" 
 - Select Tools -> Board -> ESP32 Dev Module
-- Select Tools -> CPU Frequency -> 80MHz
+- Select Tools -> CPU Frequency -> 240MHz
 - Select Tools -> Flash Frequency -> 80MHz
-- Select Tools -> Flash Mode -> DIO
+- Select Tools -> Flash Mode -> QIO
 - Select Tools -> Flash Size -> 4MB
-- Select Tools -> Partition Scheme -> Huge App (3MB no OTA/1MB SPIFFS)
+- Select Tools -> Partition Scheme -> minimal SPIFFS (1.9MB APP with OTA/190KB SPIFFS)
 - Select Tools -> PSRAM -> Enabled
 - Select Tools -> Upload Speed -> 921600
 - Select Tools -> open serial monitor @ 115200 baud
@@ -75,19 +99,21 @@ You need to be familiar with Arduino to compile and flash it for your platform. 
 - compile/upload
 
 ### Arduino IDE settings for T-Beam S3 Supreme (Caution: the UF2 firmware upload option will no longer work after the following steps)
+- based on https://github.com/Xinyuan-LilyGO/LilyGo-LoRa-Series?tab=readme-ov-file#3%EF%B8%8F⃣arduino-ide-quick-start
+- Install "esp32 by Espressif" version 2.0.9 under "BOARDS MANAGER" 
 - Select Tools -> Board -> ESP32S3 Dev Module
-- Select Tools -> CPU Frequency -> 80MHz
+- Select Tools -> USB CDC on Boot -> enabled
+- Select Tools -> CPU Frequency -> 240MHz
+- Select Tools -> USB DFU on Boot -> disabled
 - Select Tools -> Flash Frequency -> 80MHz
 - Select Tools -> Flash Mode -> QIO
 - Select Tools -> Flash Size -> 8MB
+- Select Tools -> USB Firmware MSC on Boot -> disabled
 - Select Tools -> Partition Scheme -> 8M with spiffs (3MB APP/1.5MB SPIFFS)
 - Select Tools -> PSRAM -> QSPI PSRAM
-- Select Tools -> Upload Speed -> 921600
 - Select Tools -> Upload Mode -> USB-OTG CDC (TinyUSB)
+- Select Tools -> Upload Speed -> 921600
 - Select Tools -> USB Mode -> USB-OTG CDC (TinyUSB)
-- Select Tools -> USB Firmware MSC on Boot -> disabled
-- Select Tools -> USB DFU on Boot -> disabled
-- Select Tools -> USB CDC on Boot -> enabled
 - connect your T-Beam S3 Supreme
 - put your T-Beam in Espressif Service Mode (press and keep holding **BOOT**, press and release **RESET**, thereafter release **BOOT**)
 - compile/upload
@@ -100,7 +126,8 @@ alternative for **T-Beam S3 Supreme** (and if you want to maintain the UF2 firmw
 - connect your T-Beam S3 Supreme and put it in UF2 upload mode (press **RESET** and shortly thereafter **BOOT**)
 - upload the `SoftRF.ino.uf2` file to the TBEAMBOOT drive, see also: https://github.com/lyusupov/SoftRF/blob/master/software/firmware/binaries/README.md#esp32-s3
 
-### Arduino IDE settings for T-Echo
+### Arduino IDE settings for T-Echo and T1000-E
+- Install "Adafruit nRF52 by Adafruit" under "BOARDS MANAGER" 
 - Select Tools -> Board -> Nordic nRF52840 DK
 - connect your T-Echo
 - Select Tools -> Port -> (select accodingly)

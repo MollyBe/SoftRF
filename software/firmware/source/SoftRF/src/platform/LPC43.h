@@ -1,6 +1,6 @@
 /*
  * Platform_LPC43.h
- * Copyright (C) 2021-2024 Linar Yusupov
+ * Copyright (C) 2021-2025 Linar Yusupov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -120,11 +120,13 @@ extern usb_data_t usb_data_type;
 #define EXCLUDE_GNSS_GOKE
 #define EXCLUDE_GNSS_AT65
 #define EXCLUDE_GNSS_UC65
+#define EXCLUDE_GNSS_AG33
 #define EXCLUDE_LOG_GNSS_VERSION
 
 #define EXCLUDE_BMP180
 //#define EXCLUDE_BMP280
 #define EXCLUDE_BME680
+#define EXCLUDE_BME280AUX
 #define EXCLUDE_MPL3115A2
 
 #define USE_NMEA_CFG

@@ -1,6 +1,6 @@
 /*
  * Platform_ESP32.h
- * Copyright (C) 2019-2024 Linar Yusupov
+ * Copyright (C) 2019-2025 Linar Yusupov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -141,6 +141,7 @@
 
 // Audio
 //#define EXCLUDE_AUDIO
+
 #if !defined(EXCLUDE_AUDIO)
 //#define USE_EXT_I2S_DAC
 #endif /* EXCLUDE_AUDIO */

@@ -29,6 +29,7 @@ jobs:
             'esp32:esp32:esp32c3',
             'esp32:esp32:esp32c6',
             'esp32:esp32:esp32h2',
+            'esp32:esp32:esp32p4',
             'STM32:stm32:Nucleo_64',
             'STMicroelectronics:stm32:GenF1',
             'STMicroelectronics:stm32:GenWL',
@@ -44,17 +45,24 @@ jobs:
             'arduino:renesas_uno:unor4wifi',
             'rp2040:rp2040:generic',
             'rp2040:rp2040:rpipicow',
+            #'rp2040:rp2040:rpipico2:arch=arm',
+            'rp2040:rp2040:rpipico2:arch=riscv',
+            'rp2040:rp2040:rpipico2w:arch=arm',
+            #'rp2040:rp2040:rpipico2w:arch=riscv',
             'arduino:mbed_rp2040:pico',
-            'SiliconLabs:silabs:nano_matter'
+            #'arduino:mbed_nano:nanorp2040connect',
+            'SiliconLabs:silabs:nano_matter:protocol_stack=ble_arduino',
+            'WCH:ch32v:CH32V30x_EVT'
           ]
 
     env:
       ARDUINO_IDE_VERSION: 1.8.13
       ARDUINO_CLI_VERSION: 0.34.2
-      ARDUINO_BLE_VERSION: 1.3.6
+      ARDUINO_BLE_VERSION: 1.3.7
       ENERGIA_IDE_VERSION: 1.8.10E23
       NIM_BLE_VERSION:     1.4.1
       # NIM_BLE_VERSION:   esp32-c6-test
+      TINYUSB_VERSION:     3.4.0
       BOARD:               ${{ matrix.board }}
       PINS_ARDUINO:        pins_arduino.h
 
@@ -75,7 +83,7 @@ jobs:
           if [[ "$BOARD" =~ "energia:" ]]; then
             sudo dpkg --add-architecture i386 ;
             sudo apt-get update ;
-            sudo apt-get install libc6:i386 libncurses5:i386 libstdc++6:i386 ;
+            sudo apt-get install libc6:i386 libncurses6:i386 libstdc++6:i386 ;
             wget https://energia.nu/downloads/downloadv4.php?file=energia-$ENERGIA_IDE_VERSION-linux64.tar.xz ;
             mv "downloadv4.php?file=energia-$ENERGIA_IDE_VERSION-linux64.tar.xz" energia-$ENERGIA_IDE_VERSION-linux64.tar.xz ;
             tar xf energia-$ENERGIA_IDE_VERSION-linux64.tar.xz ;
@@ -153,7 +161,7 @@ jobs:
           fi
           if [[ "$BOARD" =~ "esp32:esp32:esp32s2" ]]; then
             arduino --pref "boardsmanager.additional.urls=https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json" --save-prefs ;
-            arduino --install-boards esp32:esp32:2.0.16 ;
+            arduino --install-boards esp32:esp32:2.0.17 ;
             arduino --board $BOARD --save-prefs ;
             arduino --pref "custom_CPUFreq=esp32s2_80"                 --save-prefs ;
             arduino --pref "custom_DebugLevel=esp32s2_none"            --save-prefs ;
@@ -167,7 +175,7 @@ jobs:
           fi
           if [[ "$BOARD" =~ "esp32:esp32:esp32s3" ]]; then
             arduino --pref "boardsmanager.additional.urls=https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json" --save-prefs ;
-            arduino --install-boards esp32:esp32:2.0.16 ;
+            arduino --install-boards esp32:esp32:2.0.17 ;
             arduino --board $BOARD --save-prefs ;
             arduino --pref "custom_CPUFreq=esp32s3_80"                 --save-prefs ;
             arduino --pref "custom_DebugLevel=esp32s3_none"            --save-prefs ;
@@ -183,7 +191,7 @@ jobs:
           fi
           if [[ "$BOARD" =~ "esp32:esp32:esp32c3" ]]; then
             arduino --pref "boardsmanager.additional.urls=https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json" --save-prefs ;
-            arduino --install-boards esp32:esp32:2.0.16 ;
+            arduino --install-boards esp32:esp32:2.0.17 ;
             arduino --board $BOARD --save-prefs ;
             arduino --pref "custom_CPUFreq=esp32c3_80"                 --save-prefs ;
             arduino --pref "custom_DebugLevel=esp32c3_none"            --save-prefs ;
@@ -205,7 +213,7 @@ jobs:
           #fi
           if [[ "$BOARD" =~ "esp32:esp32:esp32c6" ]]; then
             arduino --pref "boardsmanager.additional.urls=https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_dev_index.json" --save-prefs ;
-            arduino --install-boards esp32:esp32:3.0.0-rc3 ;
+            arduino --install-boards esp32:esp32:3.1.1 ;
             arduino --board $BOARD --save-prefs ;
             arduino --pref "custom_CPUFreq=esp32c6_80"                 --save-prefs ;
             arduino --pref "custom_DebugLevel=esp32c6_none"            --save-prefs ;
@@ -215,13 +223,20 @@ jobs:
             arduino --pref "custom_PSRAM=esp32c6_enabled"              --save-prefs ;
             arduino --pref "custom_PartitionScheme=esp32c6_huge_app"   --save-prefs ;
             arduino --pref "custom_UploadSpeed=esp32c6_921600"         --save-prefs ;
-            # cd $HOME/.arduino15/packages/esp32/hardware/esp32/3.0.0-rc3 ;
+            # cd $HOME/.arduino15/packages/esp32/hardware/esp32/3.1.1 ;
             # sed -i "s\echo '-DARDUINO_CORE_BUILD'\echo -DARDUINO_CORE_BUILD\g" platform.txt ;
             wget https://github.com/h2zero/NimBLE-Arduino/archive/refs/tags/${NIM_BLE_VERSION}.tar.gz ;
             # wget https://github.com/h2zero/NimBLE-Arduino/archive/refs/heads/${NIM_BLE_VERSION}.tar.gz ;
             tar xzf ${NIM_BLE_VERSION}.tar.gz ;
             rm ${NIM_BLE_VERSION}.tar.gz ;
             mv NimBLE-Arduino-${NIM_BLE_VERSION} $HOME/Arduino/libraries/ ;
+            wget https://github.com/arduino-libraries/ArduinoBLE/archive/refs/tags/${ARDUINO_BLE_VERSION}.tar.gz ;
+            tar xzf ${ARDUINO_BLE_VERSION}.tar.gz ;
+            rm ${ARDUINO_BLE_VERSION}.tar.gz ;
+            mv ArduinoBLE-${ARDUINO_BLE_VERSION} $HOME/Arduino/libraries/ ;
+            cd $HOME/Arduino/libraries/ArduinoBLE-${ARDUINO_BLE_VERSION}//src/utility ;
+            sed -i '82 a #if !(CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32H2)' HCIVirtualTransport.cpp ;
+            sed -i '84 a #endif' HCIVirtualTransport.cpp ;
             cd $GITHUB_WORKSPACE ;
           fi
           #if [[ "$BOARD" =~ "esp32:esp32:esp32h2" ]]; then
@@ -234,7 +249,7 @@ jobs:
           #fi
           if [[ "$BOARD" =~ "esp32:esp32:esp32h2" ]]; then
             arduino --pref "boardsmanager.additional.urls=https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_dev_index.json" --save-prefs ;
-            arduino --install-boards esp32:esp32:3.0.0-rc3 ;
+            arduino --install-boards esp32:esp32:3.1.1 ;
             arduino --board $BOARD --save-prefs ;
             arduino --pref "custom_CPUFreq=esp32h2_80"                 --save-prefs ;
             arduino --pref "custom_DebugLevel=esp32h2_none"            --save-prefs ;
@@ -242,9 +257,32 @@ jobs:
             arduino --pref "custom_FlashMode=esp32h2_dio"              --save-prefs ;
             arduino --pref "custom_FlashSize=esp32h2_4M"               --save-prefs ;
             arduino --pref "custom_PSRAM=esp32h2_enabled"              --save-prefs ;
-            arduino --pref "custom_PartitionScheme=esp32h2_huge_app"   --save-prefs ;
+            arduino --pref "custom_PartitionScheme=esp32h2_no_fs"      --save-prefs ;
             arduino --pref "custom_UploadSpeed=esp32h2_921600"         --save-prefs ;
-            # cd $HOME/.arduino15/packages/esp32/hardware/esp32/3.0.0-rc3 ;
+            # cd $HOME/.arduino15/packages/esp32/hardware/esp32/3.1.1 ;
+            # sed -i "s\echo '-DARDUINO_CORE_BUILD'\echo -DARDUINO_CORE_BUILD\g" platform.txt ;
+            wget https://github.com/arduino-libraries/ArduinoBLE/archive/refs/tags/${ARDUINO_BLE_VERSION}.tar.gz ;
+            tar xzf ${ARDUINO_BLE_VERSION}.tar.gz ;
+            rm ${ARDUINO_BLE_VERSION}.tar.gz ;
+            mv ArduinoBLE-${ARDUINO_BLE_VERSION} $HOME/Arduino/libraries/ ;
+            cd $HOME/Arduino/libraries/ArduinoBLE-${ARDUINO_BLE_VERSION}//src/utility ;
+            sed -i '82 a #if !(CONFIG_IDF_TARGET_ESP32C2 || CONFIG_IDF_TARGET_ESP32C6 || CONFIG_IDF_TARGET_ESP32H2)' HCIVirtualTransport.cpp ;
+            sed -i '84 a #endif' HCIVirtualTransport.cpp ;
+            cd $GITHUB_WORKSPACE ;
+          fi
+          if [[ "$BOARD" =~ "esp32:esp32:esp32p4" ]]; then
+            arduino --pref "boardsmanager.additional.urls=https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_dev_index.json" --save-prefs ;
+            arduino --install-boards esp32:esp32:3.1.1 ;
+            arduino --board $BOARD --save-prefs ;
+            arduino --pref "custom_CPUFreq=esp32p4_40"                 --save-prefs ;
+            arduino --pref "custom_DebugLevel=esp32p4_none"            --save-prefs ;
+            arduino --pref "custom_FlashFreq=esp32p4_40"               --save-prefs ;
+            arduino --pref "custom_FlashMode=esp32p4_dio"              --save-prefs ;
+            arduino --pref "custom_FlashSize=esp32p4_4M"               --save-prefs ;
+            arduino --pref "custom_PSRAM=esp32p4_enabled"              --save-prefs ;
+            arduino --pref "custom_PartitionScheme=esp32p4_no_fs"      --save-prefs ;
+            arduino --pref "custom_UploadSpeed=esp32p4_921600"         --save-prefs ;
+            # cd $HOME/.arduino15/packages/esp32/hardware/esp32/3.1.1 ;
             # sed -i "s\echo '-DARDUINO_CORE_BUILD'\echo -DARDUINO_CORE_BUILD\g" platform.txt ;
             cd $GITHUB_WORKSPACE ;
           fi
@@ -342,8 +380,12 @@ jobs:
           fi
           if [[ "$BOARD" =~ "arduino:mbed_edge:" ]]; then
             arduino --pref "boardsmanager.additional.urls=https://downloads.arduino.cc/packages/package_index.json" --save-prefs ;
-            arduino --install-boards arduino:mbed_edge:4.1.1 ;
+            arduino --install-boards arduino:mbed_edge:4.2.1 ;
             arduino --board $BOARD --save-prefs ;
+            wget https://github.com/arduino-libraries/ArduinoBLE/archive/refs/tags/${ARDUINO_BLE_VERSION}.tar.gz ;
+            tar xzf ${ARDUINO_BLE_VERSION}.tar.gz ;
+            rm ${ARDUINO_BLE_VERSION}.tar.gz ;
+            mv ArduinoBLE-${ARDUINO_BLE_VERSION} $HOME/Arduino/libraries/ ;
             cd $GITHUB_WORKSPACE ;
           fi
           if [[ "$BOARD" =~ "arduino:samd:" ]]; then
@@ -358,7 +400,7 @@ jobs:
           fi
           if [[ "$BOARD" =~ "arduino:renesas_uno:" ]]; then
             arduino --pref "boardsmanager.additional.urls=https://downloads.arduino.cc/packages/package_index.json" --save-prefs ;
-            arduino --install-boards arduino:renesas_uno:1.1.0 ;
+            arduino --install-boards arduino:renesas_uno:1.3.2 ;
             arduino --board $BOARD --save-prefs ;
             wget https://github.com/arduino-libraries/ArduinoBLE/archive/refs/tags/${ARDUINO_BLE_VERSION}.tar.gz ;
             tar xzf ${ARDUINO_BLE_VERSION}.tar.gz ;
@@ -368,19 +410,27 @@ jobs:
           fi
           if [[ "$BOARD" =~ "rp2040:rp2040:" ]]; then
             arduino --pref "boardsmanager.additional.urls=https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json" --save-prefs ;
-            arduino --install-boards rp2040:rp2040:3.8.1 ;
+            arduino --install-boards rp2040:rp2040:4.4.2 ;
             arduino --board $BOARD --save-prefs ;
             if [[ "$BOARD" =~ "rp2040:rp2040:rpipicow" ]]; then
               arduino --pref "custom_freq=rpipicow_120"               --save-prefs ;
               arduino --pref "custom_ipbtstack=rpipicow_ipv4btcble"   --save-prefs ;
+              arduino --pref "custom_flash=rpipicow_2097152_1048576"  --save-prefs ;
+              arduino --pref "custom_usbstack=rpipicow_tinyusb"       --save-prefs ;
+            fi
+            if [[ "$BOARD" =~ "rp2040:rp2040:rpipico2w" ]]; then
+              arduino --pref "custom_freq=rpipico2w_120"              --save-prefs ;
+              arduino --pref "custom_ipbtstack=rpipico2w_ipv4btcble"  --save-prefs ;
+              arduino --pref "custom_flash=rpipico2w_4194304_3145728" --save-prefs ;
+              arduino --pref "custom_usbstack=rpipico2w_tinyusb"      --save-prefs ;
             fi
             cd $GITHUB_WORKSPACE ;
           fi
           if [[ "$BOARD" =~ "arduino:mbed_rp2040:" ]]; then
             arduino --pref "boardsmanager.additional.urls=https://downloads.arduino.cc/packages/package_index.json" --save-prefs ;
-            arduino --install-boards arduino:mbed_rp2040:4.1.1 ;
+            arduino --install-boards arduino:mbed_rp2040:4.2.1 ;
             arduino --board $BOARD --save-prefs ;
-            cd $HOME/.arduino15/packages/arduino/hardware/mbed_rp2040/4.1.1/variants/RASPBERRY_PI_PICO ;
+            cd $HOME/.arduino15/packages/arduino/hardware/mbed_rp2040/4.2.1/variants/RASPBERRY_PI_PICO ;
             sed -i '62 a // Serial2'                   ${PINS_ARDUINO} ;
             sed -i '63 a #define PIN_SERIAL2_TX (4ul)' ${PINS_ARDUINO} ;
             sed -i '64 a #define PIN_SERIAL2_RX (5ul)' ${PINS_ARDUINO} ;
@@ -404,7 +454,7 @@ jobs:
           fi
           #if [[ "$BOARD" =~ "SiliconLabs:silabs:" ]]; then
           #  arduino --pref "boardsmanager.additional.urls=https://siliconlabs.github.io/arduino/package_arduinosilabs_index.json" --save-prefs ;
-          #  arduino --install-boards SiliconLabs:silabs:2.0.0 ;
+          #  arduino --install-boards SiliconLabs:silabs:2.2.0 ;
           #  arduino --board $BOARD --save-prefs ;
           #  cd $GITHUB_WORKSPACE ;
           #fi
@@ -412,8 +462,33 @@ jobs:
             arduino-cli config init ;
             arduino-cli config add board_manager.additional_urls https://siliconlabs.github.io/arduino/package_arduinosilabs_index.json ;
             arduino-cli core update-index ;
-            arduino-cli core install SiliconLabs:silabs@2.0.0 ;
+            arduino-cli core install SiliconLabs:silabs@2.2.0 ;
             # arduino-cli board attach -b $BOARD ;
+            wget https://github.com/arduino-libraries/ArduinoBLE/archive/refs/tags/${ARDUINO_BLE_VERSION}.tar.gz ;
+            tar xzf ${ARDUINO_BLE_VERSION}.tar.gz ;
+            rm ${ARDUINO_BLE_VERSION}.tar.gz ;
+            mv ArduinoBLE-${ARDUINO_BLE_VERSION} $HOME/Arduino/libraries/ ;
+            cd $GITHUB_WORKSPACE ;
+          fi
+          if [[ "$BOARD" =~ "WCH:ch32v:" ]]; then
+            arduino --pref "boardsmanager.additional.urls=https://github.com/openwch/board_manager_files/raw/main/package_ch32v_index.json" --save-prefs ;
+            arduino --install-boards WCH:ch32v:1.0.4 ;
+            arduino --board $BOARD --save-prefs ;
+            arduino --pref "custom_clock=CH32V30x_EVT_144MHz_HSE"  --save-prefs ;
+            arduino --pref "custom_rtlib=CH32V30x_EVT_nanofp"      --save-prefs ;
+            arduino --pref "custom_usb=CH32V30x_EVT_tinyusb_usbfs" --save-prefs ;
+            mkdir -p $HOME/Arduino/hardware/WCH ;
+            cd $HOME/Arduino/hardware/WCH ;
+            wget https://github.com/openwch/arduino_core_ch32/archive/refs/heads/main.zip ;
+            unzip main.zip ;
+            rm main.zip ;
+            mv arduino_core_ch32-main ch32v ;
+            mv $HOME/.arduino15/packages/WCH/hardware/ch32v/1.0.4 /tmp/ ;
+            wget https://github.com/adafruit/Adafruit_TinyUSB_Arduino/archive/refs/tags/${TINYUSB_VERSION}.zip ;
+            unzip ${TINYUSB_VERSION}.zip ;
+            rm ${TINYUSB_VERSION}.zip ;
+            rmdir ch32v/libraries/Adafruit_TinyUSB_Arduino ;
+            mv Adafruit_TinyUSB_Arduino-${TINYUSB_VERSION} ch32v/libraries/Adafruit_TinyUSB_Arduino ;
             cd $GITHUB_WORKSPACE ;
           fi
 
@@ -435,20 +510,21 @@ jobs:
             arduino --verify                 --board $BOARD $PWD/software/firmware/source/SoftRF/SoftRF.ino ;
             fi ;
           #fi ;
-          if [[ "$BOARD" =~ "esp32:esp32:esp32h2" ]]; then
-            #  SkyView is not available for H2
-            true ;
-          else
-            if [[ "$BOARD" =~ "esp32:esp32:"       ]]; then
-            arduino --verify --verbose-build --board $BOARD $PWD/software/firmware/source/SkyView/SkyView.ino ;
-            fi ;
-          fi ;
-          if [[ "$BOARD" =~ "esp32:esp32:esp32h2" ]]; then
-            #  SkyWatch is not available for H2
+          if [[ "$BOARD" =~ "esp32:esp32:esp32h2" ]] || [[ "$BOARD" =~ "esp32:esp32:esp32p4" ]]; then
+            #  SkyWatch is not available for H2 and P4
             true ;
           else
             if [[ "$BOARD" =~ "esp32:esp32:"       ]]; then
             arduino --verify                 --board $BOARD $PWD/software/firmware/source/SkyWatch/SkyWatch.ino ;
+            fi ;
+          fi ;
+          if [[ "$BOARD" =~ "esp32:esp32:esp32h2" ]] || [[ "$BOARD" =~ "esp32:esp32:esp32p4" ]]; then
+            #  SkyView is not available for H2 and P4
+            true ;
+          else
+            if [[ "$BOARD" =~ "esp32:esp32:"       ]]; then
+            rm -rf $HOME/Arduino/libraries/ArduinoBLE-${ARDUINO_BLE_VERSION} ;
+            arduino --verify --verbose-build --board $BOARD $PWD/software/firmware/source/SkyView/SkyView.ino ;
             fi ;
           fi ;
           if [[ "$BOARD" =~ "STM32:stm32:"         ]]; then
@@ -503,4 +579,7 @@ jobs:
           fi ;
           if [[ "$BOARD" =~ "SiliconLabs:silabs:"  ]]; then
             arduino-cli compile -v -b "$BOARD" $PWD/software/firmware/source/SoftRF ;
+          fi ;
+          if [[ "$BOARD" =~ "WCH:ch32v:" ]]; then
+            arduino --verify --verbose-build --board $BOARD $PWD/software/firmware/source/SoftRF/SoftRF.ino ;
           fi ;

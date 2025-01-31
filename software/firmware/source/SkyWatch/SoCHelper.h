@@ -1,6 +1,6 @@
 /*
  * SoCHelper.h
- * Copyright (C) 2019-2024 Linar Yusupov
+ * Copyright (C) 2019-2025 Linar Yusupov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,7 +24,7 @@
 #include "SkyWatch.h"
 #include "Platform_ESP8266.h"
 #include "Platform_ESP32.h"
-#include "Platform_RP2040.h"
+#include "Platform_RP2XXX.h"
 
 typedef struct SoC_ops_struct {
   uint8_t id;
@@ -71,8 +71,11 @@ enum
 	SOC_ESP32,
 	SOC_ESP32S2,
 	SOC_ESP32S3,
+	SOC_ESP32C2,
 	SOC_ESP32C3,
 	SOC_ESP32C6,
+	SOC_ESP32H2,
+	SOC_ESP32P4,
 	SOC_RPi,
 	SOC_CC13X0,
 	SOC_CC13X2,
@@ -83,7 +86,12 @@ enum
 	SOC_SAMD,
 	SOC_AVR,
 	SOC_ASR66,
-	SOC_RP2040
+	SOC_RP2040,
+	SOC_RP2350_ARM,
+	SOC_RP2350_RISC,
+	SOC_RA4M1,
+	SOC_EFR32,
+	SOC_CH32
 };
 
 extern const SoC_ops_t *SoC;
@@ -120,8 +128,8 @@ extern const SoC_ops_t AVR_ops;
 #if defined(ARDUINO_ARCH_ASR6601)
 extern const SoC_ops_t ASR66_ops;
 #endif
-#if defined(ARDUINO_ARCH_RP2040)
-extern const SoC_ops_t RP2040_ops;
+#if defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_RP2350)
+extern const SoC_ops_t RP2xxx_ops;
 #endif
 
 byte SoC_setup(void);

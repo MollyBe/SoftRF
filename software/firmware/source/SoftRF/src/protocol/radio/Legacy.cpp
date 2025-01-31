@@ -3,7 +3,7 @@
  * Copyright (C) 2014-2015 Stanislaw Pusep
  *
  * Protocol_Legacy, encoder for legacy radio protocol
- * Copyright (C) 2016-2024 Linar Yusupov
+ * Copyright (C) 2016-2025 Linar Yusupov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -259,8 +259,7 @@ static size_t legacy_v6_encode(void *legacy_pkt, ufo_t *this_aircraft) {
     uint32_t key[4];
 
     uint32_t id = this_aircraft->addr;
-    uint8_t acft_type = this_aircraft->aircraft_type > AIRCRAFT_TYPE_STATIC ?
-            AIRCRAFT_TYPE_UNKNOWN : this_aircraft->aircraft_type;
+    uint8_t acft_type = this_aircraft->aircraft_type;
 
     int32_t lat = (int32_t) (this_aircraft->latitude  * 1e7);
     int32_t lon = (int32_t) (this_aircraft->longitude * 1e7);
@@ -297,11 +296,7 @@ static size_t legacy_v6_encode(void *legacy_pkt, ufo_t *this_aircraft) {
     pkt->type = 0; /* Air V6 position */
     pkt->addr = id & 0x00FFFFFF;
 
-    if (this_aircraft->addr_type != ADDR_TYPE_ICAO) {
-      pkt->addr_type = ADDR_TYPE_RANDOM;
-    } else {
-      pkt->addr_type = ADDR_TYPE_ICAO;
-    }
+    pkt->addr_type = this_aircraft->addr_type;
     
     pkt->parity = 0;
 
@@ -366,7 +361,7 @@ size_t legacy_encode(void *legacy_pkt, ufo_t *this_aircraft) {
  */
 
 #define USE_INTERLEAVING
-//#define EXCLUDE_AIR6
+#define EXCLUDE_AIR6
 
 static const uint16_t lon_div_table[] = {
    53,  53,  54,  54,  55,  55,
@@ -562,8 +557,7 @@ size_t legacy_encode(void *legacy_pkt, ufo_t *this_aircraft) {
     uint32_t *wpkt     = (uint32_t *) legacy_pkt;
 
     uint32_t id        = this_aircraft->addr;
-    uint8_t acft_type  = this_aircraft->aircraft_type > AIRCRAFT_TYPE_STATIC ?
-                         AIRCRAFT_TYPE_UNKNOWN : this_aircraft->aircraft_type;
+    uint8_t acft_type = this_aircraft->aircraft_type;
 
     int32_t lat        = (int32_t) (this_aircraft->latitude  * 1e7);
     int32_t lon        = (int32_t) (this_aircraft->longitude * 1e7);
@@ -576,13 +570,7 @@ size_t legacy_encode(void *legacy_pkt, ufo_t *this_aircraft) {
 
     pkt->addr          = id & 0x00FFFFFF;
     pkt->type          = 2; /* Air V7 position */
-
-    if (this_aircraft->addr_type != ADDR_TYPE_ICAO) {
-      pkt->addr_type = ADDR_TYPE_RANDOM;
-    } else {
-      pkt->addr_type = ADDR_TYPE_ICAO;
-    }
-
+    pkt->addr_type     = this_aircraft->addr_type;
     pkt->stealth       = this_aircraft->stealth;
     pkt->no_track      = this_aircraft->no_track;
 

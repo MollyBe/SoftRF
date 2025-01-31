@@ -1,6 +1,6 @@
 /*
  * Protocol.h
- * Copyright (C) 2017-2024 Linar Yusupov
+ * Copyright (C) 2017-2025 Linar Yusupov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,6 +38,7 @@ enum
 {
 	RF_MODULATION_TYPE_2FSK,
 	RF_MODULATION_TYPE_LORA,
+	RF_MODULATION_TYPE_LR_FHSS,
 	RF_MODULATION_TYPE_PPM,
 };
 
@@ -93,6 +94,7 @@ enum
 enum
 {
 	RF_RX_BANDWIDTH_SS_50KHZ,
+	RF_RX_BANDWIDTH_SS_62KHZ,
 	RF_RX_BANDWIDTH_SS_100KHZ,
 	RF_RX_BANDWIDTH_SS_125KHZ,
 	RF_RX_BANDWIDTH_SS_166KHZ,

@@ -29,12 +29,20 @@
 #define SOC_GPIO_PIN_C6_SDA             10 /* D2 */
 #define SOC_GPIO_PIN_C6_SCL             8  /* D4 */
 
+// LR1121
+#define SOC_GPIO_PIN_C6_BUSY            2  /* D0 */
+#define SOC_GPIO_PIN_C6_DIO9            8  /* D4 */
+
 // battery voltage (ADC)
 #define SOC_GPIO_PIN_C6_BATTERY         1  /* A0 */
 
 // auxillary
 #define SOC_GPIO_PIN_C6_BUZZER          21 /* 10 */
 #define SOC_GPIO_PIN_C6_STATUS          SOC_UNUSED_PIN
+
+// LP I2C pins are fixed on ESP32-C6
+#define SOC_GPIO_PIN_C6_LP_SDA          6
+#define SOC_GPIO_PIN_C6_LP_SCL          7
 
 
 /* WT018684-S5 (ESP32-C2) */

@@ -1,7 +1,7 @@
 /*
  * FlightRecorder.h
  *
- * Copyright (C) 2023-2024 Linar Yusupov. All rights reserved.
+ * Copyright (C) 2023-2025 Linar Yusupov. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -43,11 +43,12 @@ liftoff_threshold=1.5
 log_interval=5
 */
 
-#if !defined(ARDUINO_ARCH_ESP32)
+#if !defined(ARDUINO_ARCH_ESP32) && !defined(ARDUINO_ARCH_NRF52) && \
+    !defined(ARDUINO_ARCH_CH32)
 typedef struct __attribute__((__packed__))
 #else
 typedef struct
-#endif /* ARDUINO_ARCH_ESP32 */
+#endif /* ARDUINO_ARCH_ESP32 || ARDUINO_ARCH_NRF52 || ARDUINO_ARCH_CH32 */
 {
     char pilot[80];
     char copilot[80];

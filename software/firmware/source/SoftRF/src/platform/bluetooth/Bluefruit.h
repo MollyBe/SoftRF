@@ -1,6 +1,6 @@
 /*
  * BluetoothHelper.h
- * Copyright (C) 2018-2024 Linar Yusupov
+ * Copyright (C) 2018-2025 Linar Yusupov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -86,5 +86,16 @@ typedef struct {
 } __attribute__((packed)) sensbox_system_t;
 
 #define isTimeToSensBox() (millis() - BLE_SensBox_TimeMarker > 500) /* 2 Hz */
+
+class BLEDfuSecure : public BLEService
+{
+  protected:
+    BLECharacteristic _chr_control;
+
+  public:
+    BLEDfuSecure(void);
+
+    virtual err_t begin(void);
+};
 
 extern IODev_ops_t nRF52_Bluetooth_ops;

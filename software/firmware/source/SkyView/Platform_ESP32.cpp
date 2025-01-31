@@ -1,6 +1,6 @@
 /*
  * Platform_ESP32.cpp
- * Copyright (C) 2019-2024 Linar Yusupov
+ * Copyright (C) 2019-2025 Linar Yusupov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -611,7 +611,11 @@ static void ESP32_setup()
 #endif /* TBD */
 
 #else
+#if ARDUINO_USB_CDC_ON_BOOT && defined(CONFIG_IDF_TARGET_ESP32C6)
+  Serial.begin(SERIAL_OUT_BR);
+#else
   Serial.begin(SERIAL_OUT_BR, SERIAL_OUT_BITS);
+#endif /* CONFIG_IDF_TARGET_ESP32C6 */
 #endif /* ARDUINO_USB_CDC_ON_BOOT && (CONFIG_IDF_TARGET_ESP32S2 || S3) */
 }
 
@@ -888,6 +892,7 @@ static void ESP32_WiFiUDP_stopAll()
 
 static void ESP32_Battery_setup()
 {
+#if !defined(ESP_IDF_VERSION_MAJOR) || ESP_IDF_VERSION_MAJOR < 5
 #if defined(CONFIG_IDF_TARGET_ESP32)
   calibrate_voltage(settings->adapter == ADAPTER_TTGO_T5S ?
                     (adc1_channel_t) ADC1_GPIO35_CHANNEL  :
@@ -903,6 +908,9 @@ static void ESP32_Battery_setup()
 #else
 #error "This ESP32 family build variant is not supported!"
 #endif /* CONFIG_IDF_TARGET_ESP32 */
+#else
+  /* TBD */
+#endif /* ESP_IDF_VERSION_MAJOR */
 }
 
 static float ESP32_Battery_voltage()
@@ -929,11 +937,11 @@ SoftSPI swSPI(SOC_GPIO_PIN_MOSI_WS,
               SOC_GPIO_PIN_MOSI_WS, /* half duplex */
               SOC_GPIO_PIN_SCK_WS);
 
-#if defined(CONFIG_IDF_TARGET_ESP32C6)
+#if defined(ESP_IDF_VERSION_MAJOR) && ESP_IDF_VERSION_MAJOR>=5
 static spinlock_t EPD_ident_mutex;
 #else
 static portMUX_TYPE EPD_ident_mutex;
-#endif /* CONFIG_IDF_TARGET_ESP32C6 */
+#endif /* ESP_IDF_VERSION_MAJOR */
 
 static ep_model_id ESP32_EPD_ident()
 {

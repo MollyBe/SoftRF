@@ -1,6 +1,6 @@
 /*
  * Platform_RA4M1.h
- * Copyright (C) 2024 Linar Yusupov
+ * Copyright (C) 2024-2025 Linar Yusupov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,6 +26,9 @@
 #define MAX_TRACKING_OBJECTS    8
 
 #define DEFAULT_SOFTRF_MODEL    SOFTRF_MODEL_ACADEMY
+
+// #include <core_version.h>    // TODO
+#define ARDUINO_CORE_VERSION    "1.2.0"
 
 #define isValidFix()            isValidGNSSFix()
 
@@ -121,7 +124,7 @@ extern  SoftSPI RadioSPI;
 
 /* SX1276 */
 #define SOC_GPIO_PIN_RST      PIN_D9
-#define SOC_GPIO_PIN_BUSY     SOC_UNUSED_PIN
+#define SOC_GPIO_PIN_BUSY     LMIC_UNUSED_PIN
 #define SOC_GPIO_PIN_DIO1     PIN_D6
 
 /* RF antenna switch */
@@ -184,6 +187,7 @@ extern  SoftSPI RadioSPI;
 #define EXCLUDE_GNSS_GOKE
 #define EXCLUDE_GNSS_AT65
 #define EXCLUDE_GNSS_UC65
+#define EXCLUDE_GNSS_AG33
 //#define EXCLUDE_LOG_GNSS_VERSION
 
 /* Component                         Cost */
@@ -191,6 +195,7 @@ extern  SoftSPI RadioSPI;
 #define EXCLUDE_BMP180           //  -    kb
 //#define EXCLUDE_BMP280         //  -    kb
 #define EXCLUDE_BME680           //  -    kb
+#define EXCLUDE_BME280AUX        //  -    kb
 #define EXCLUDE_MPL3115A2        //  -    kb
 #define EXCLUDE_NRF905           //  -    kb
 #define EXCLUDE_UATM             //  -    kb
@@ -201,6 +206,13 @@ extern  SoftSPI RadioSPI;
 
 //#define USE_BASICMAC
 //#define EXCLUDE_SX1276         //  -  3 kb
+#if defined(ARDUINO_UNOR4_MINIMA)
+#define USE_RADIOLIB
+//#define EXCLUDE_LR11XX
+#define EXCLUDE_CC1101
+#define EXCLUDE_SI443X
+#define EXCLUDE_SX1231
+#endif /* ARDUINO_UNOR4_MINIMA */
 
 #if defined(EXCLUDE_WIFI)
 #define USE_OLED                 /* -1.5K HEAP */

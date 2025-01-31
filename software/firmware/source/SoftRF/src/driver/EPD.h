@@ -1,6 +1,6 @@
 /*
  * EPDHelper.h
- * Copyright (C) 2019-2024 Linar Yusupov
+ * Copyright (C) 2019-2025 Linar Yusupov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,6 +22,13 @@
 #if defined(USE_EPAPER)
 #define ENABLE_GxEPD2_GFX       1
 #include <GxEPD2_BW.h>
+
+extern const GFXfont FreeMono9pt7b PROGMEM;
+extern const GFXfont FreeMonoBold9pt7b PROGMEM;
+extern const GFXfont FreeMonoBold12pt7b PROGMEM;
+extern const GFXfont FreeMono18pt7b PROGMEM;
+extern const GFXfont FreeMonoBold18pt7b PROGMEM;
+extern const GFXfont FreeMonoBold24pt7b PROGMEM;
 #endif /* USE_EPAPER */
 
 #define EPD_EXPIRATION_TIME     5 /* seconds */
@@ -50,8 +57,10 @@
 #define EPD_HIBERNATE           display->hibernate()
 //#define EPD_HIBERNATE         display->powerOff()
 
+#ifndef EPD_POWEROFF
 //#define	EPD_POWEROFF		      {}
 #define EPD_POWEROFF            display->powerOff()
+#endif /* EPD_POWEROFF */
 
 enum
 {

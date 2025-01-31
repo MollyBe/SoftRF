@@ -1,6 +1,6 @@
 /*
  * ArduinoBLE.cpp
- * Copyright (C) 2024 Linar Yusupov
+ * Copyright (C) 2024-2025 Linar Yusupov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,29 +16,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#if defined(ARDUINO_ARCH_RENESAS)
-
 #include "../../system/SoC.h"
 
-#if !defined(EXCLUDE_BLUETOOTH)
+#if !defined(EXCLUDE_BLUETOOTH) && (defined(ARDUINO_ARCH_RENESAS) || \
+     defined(ARDUINO_ARCH_SILABS) || defined(USE_ARDUINOBLE))
 
 #include <ArduinoBLE.h>
 
+#if defined(ESP32)
+#include <core_version.h>
+#include <cbuf.h>
+#define ARDUINO_CORE_VERSION    ARDUINO_ESP32_RELEASE
+#else
 #include <api/RingBuffer.h>
+#endif /* ESP32 */
 
 #include "../../driver/EEPROM.h"
 #include "../../driver/Bluetooth.h"
 #include "../../driver/WiFi.h"
 #include "../../driver/Battery.h"
 
-// #include <core_version.h> // TODO
-#define ARDUINO_RA4M1_RELEASE "1.1.0"
-
 bool deviceConnected    = false;
 bool oldDeviceConnected = false;
 
+#if defined(ESP32)
+cbuf *BLE_FIFO_RX, *BLE_FIFO_TX;
+#else
 RingBufferN<BLE_FIFO_TX_SIZE> BLE_FIFO_TX = RingBufferN<BLE_FIFO_TX_SIZE>();
 RingBufferN<BLE_FIFO_RX_SIZE> BLE_FIFO_RX = RingBufferN<BLE_FIFO_RX_SIZE>();
+#endif /* ESP32 */
 
 String BT_name = HOSTNAME;
 
@@ -96,24 +102,35 @@ void UARTCharacteristicWritten(BLEDevice         central,
     characteristic.readValue(buf, len);
 
     if (valueLength > len) { valueLength = len; }
-
+#if defined(ESP32)
+    BLE_FIFO_RX->write(buf, (BLE_FIFO_RX->room() > valueLength ?
+                             valueLength : BLE_FIFO_RX->room()));
+#else
     size_t size = BLE_FIFO_RX.availableForStore();
     size = (size < valueLength) ? size : valueLength;
     for (size_t i = 0; i < size; i++) {
       BLE_FIFO_RX.store_char(buf[i]);
     }
+#endif /* ESP32 */
   }
 }
 
-static void RA4M1_Bluetooth_setup()
+static void ArdBLE_Bluetooth_setup()
 {
+  char id_06x[8];
+  snprintf(id_06x, sizeof(id_06x),"%06x", SoC->getChipId() & 0x00FFFFFFU);
   BT_name += "-";
-  BT_name += String(SoC->getChipId() & 0x00FFFFFFU, HEX);
+  BT_name += String(id_06x);
 
   switch (settings->bluetooth)
   {
   case BLUETOOTH_LE_HM10_SERIAL:
     {
+#if defined(ESP32)
+      BLE_FIFO_RX = new cbuf(BLE_FIFO_RX_SIZE);
+      BLE_FIFO_TX = new cbuf(BLE_FIFO_TX_SIZE);
+#endif /* ESP32 */
+
       BLE.begin();
 
       char LocalName[BLE_MAX_WRITE_CHUNK_SIZE];
@@ -137,11 +154,14 @@ static void RA4M1_Bluetooth_setup()
                                   hw_info.model == SOFTRF_MODEL_HAM        ? "Ham Edition"        :
                                   hw_info.model == SOFTRF_MODEL_MIDI       ? "Midi Edition"       :
                                   hw_info.model == SOFTRF_MODEL_ACADEMY    ? "Academy Edition"    :
+                                  hw_info.model == SOFTRF_MODEL_ECO        ? "Eco Edition"        :
+                                  hw_info.model == SOFTRF_MODEL_INK        ? "Ink Edition"        :
                                   "Unknown";
       char SerialNum[9];
       snprintf(SerialNum, sizeof(SerialNum), "%08X", SoC->getChipId());
 
-      const char *Firmware      = "Arduino RA4M1 " ARDUINO_RA4M1_RELEASE;
+      char Firmware[32];
+      snprintf(Firmware, sizeof(Firmware), "Core %s %s", SoC->name, ARDUINO_CORE_VERSION);
 
       char Hardware[9];
       snprintf(Hardware, sizeof(Hardware), "%08X", hw_info.revision);
@@ -181,7 +201,7 @@ static void RA4M1_Bluetooth_setup()
   }
 }
 
-static void RA4M1_Bluetooth_loop()
+static void ArdBLE_Bluetooth_loop()
 {
   switch (settings->bluetooth)
   {
@@ -192,6 +212,15 @@ static void RA4M1_Bluetooth_loop()
       if (deviceConnected && (millis() - BLE_Notify_TimeMarker > 10)) { /* < 18000 baud */
           uint8_t chunk[BLE_MAX_WRITE_CHUNK_SIZE];
 
+#if defined(ESP32)
+          size_t size = BLE_FIFO_TX->available();
+          size = size < BLE_MAX_WRITE_CHUNK_SIZE ? size : BLE_MAX_WRITE_CHUNK_SIZE;
+
+          if (size > 0) {
+            BLE_FIFO_TX->read((char *) chunk, size);
+            UARTCharacteristic.writeValue(chunk, size);
+          }
+#else
           size_t size = BLE_FIFO_TX.available();
           size = size < BLE_MAX_WRITE_CHUNK_SIZE ? size : BLE_MAX_WRITE_CHUNK_SIZE;
 
@@ -201,6 +230,7 @@ static void RA4M1_Bluetooth_loop()
             }
             UARTCharacteristic.writeValue(chunk, size);
           }
+#endif /* ESP32 */
 
           BLE_Notify_TimeMarker = millis();
       }
@@ -233,21 +263,38 @@ static void RA4M1_Bluetooth_loop()
   }
 }
 
-static void RA4M1_Bluetooth_fini()
+static void ArdBLE_Bluetooth_fini()
 {
-  /* TBD */
-
-  BLE.end();
+  switch (settings->bluetooth)
+  {
+  case BLUETOOTH_LE_HM10_SERIAL:
+    BLE.end();
+#if defined(ESP32)
+    delete BLE_FIFO_TX;
+    delete BLE_FIFO_RX;
+#endif /* ESP32 */
+    break;
+  case BLUETOOTH_A2DP_SOURCE:
+    break;
+  case BLUETOOTH_NONE:
+  case BLUETOOTH_SPP:
+  default:
+    break;
+  }
 }
 
-static int RA4M1_Bluetooth_available()
+static int ArdBLE_Bluetooth_available()
 {
   int rval = 0;
 
   switch (settings->bluetooth)
   {
   case BLUETOOTH_LE_HM10_SERIAL:
+#if defined(ESP32)
+    rval = BLE_FIFO_RX->available();
+#else
     rval = BLE_FIFO_RX.available();
+#endif /* ESP32 */
     break;
   case BLUETOOTH_NONE:
   case BLUETOOTH_SPP:
@@ -259,14 +306,18 @@ static int RA4M1_Bluetooth_available()
   return rval;
 }
 
-static int RA4M1_Bluetooth_read()
+static int ArdBLE_Bluetooth_read()
 {
   int rval = -1;
 
   switch (settings->bluetooth)
   {
   case BLUETOOTH_LE_HM10_SERIAL:
+#if defined(ESP32)
+    rval = BLE_FIFO_RX->read();
+#else
     rval = BLE_FIFO_RX.read_char();
+#endif /* ESP32 */
     break;
   case BLUETOOTH_NONE:
   case BLUETOOTH_SPP:
@@ -278,13 +329,17 @@ static int RA4M1_Bluetooth_read()
   return rval;
 }
 
-static size_t RA4M1_Bluetooth_write(const uint8_t *buffer, size_t size)
+static size_t ArdBLE_Bluetooth_write(const uint8_t *buffer, size_t size)
 {
   size_t rval = size;
 
   switch (settings->bluetooth)
   {
   case BLUETOOTH_LE_HM10_SERIAL:
+#if defined(ESP32)
+    rval = BLE_FIFO_TX->write((char *) buffer,
+                        (BLE_FIFO_TX->room() > size ? size : BLE_FIFO_TX->room()));
+#else
     {
       size_t avail = BLE_FIFO_TX.availableForStore();
       if (size > avail) {
@@ -294,6 +349,7 @@ static size_t RA4M1_Bluetooth_write(const uint8_t *buffer, size_t size)
         BLE_FIFO_TX.store_char(buffer[i]);
       }
     }
+#endif /* ESP32 */
     break;
   case BLUETOOTH_NONE:
   case BLUETOOTH_SPP:
@@ -305,15 +361,14 @@ static size_t RA4M1_Bluetooth_write(const uint8_t *buffer, size_t size)
   return rval;
 }
 
-IODev_ops_t RA4M1_Bluetooth_ops = {
-  "RA4M1 Bluetooth",
-  RA4M1_Bluetooth_setup,
-  RA4M1_Bluetooth_loop,
-  RA4M1_Bluetooth_fini,
-  RA4M1_Bluetooth_available,
-  RA4M1_Bluetooth_read,
-  RA4M1_Bluetooth_write
+IODev_ops_t ArdBLE_Bluetooth_ops = {
+  "Arduino BLE",
+  ArdBLE_Bluetooth_setup,
+  ArdBLE_Bluetooth_loop,
+  ArdBLE_Bluetooth_fini,
+  ArdBLE_Bluetooth_available,
+  ArdBLE_Bluetooth_read,
+  ArdBLE_Bluetooth_write
 };
 
 #endif /* EXCLUDE_BLUETOOTH */
-#endif /* ARDUINO_ARCH_RENESAS */

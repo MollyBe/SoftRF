@@ -1,6 +1,6 @@
 /*
  * Platform_CC13XX.h
- * Copyright (C) 2019-2024 Linar Yusupov
+ * Copyright (C) 2019-2025 Linar Yusupov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -130,6 +130,7 @@ struct rst_info {
 
 #define EXCLUDE_BMP280
 #define EXCLUDE_BME680
+#define EXCLUDE_BME280AUX
 #define EXCLUDE_IMU
 
 #elif defined(BOARD_E70_XXXT14S2)
@@ -182,10 +183,12 @@ struct rst_info {
 #define EXCLUDE_GNSS_GOKE
 #define EXCLUDE_GNSS_AT65
 #define EXCLUDE_GNSS_UC65
+#define EXCLUDE_GNSS_AG33
 
 #define EXCLUDE_BMP180
 //#define EXCLUDE_BMP280
 #define EXCLUDE_BME680
+#define EXCLUDE_BME280AUX
 #define EXCLUDE_MPL3115A2
 #define EXCLUDE_D1090
 
@@ -276,8 +279,10 @@ extern SCSerial                 scSerial;
 #define EXCLUDE_GNSS_GOKE
 #define EXCLUDE_GNSS_AT65
 #define EXCLUDE_GNSS_UC65
+#define EXCLUDE_GNSS_AG33
 
 #define EXCLUDE_BME680
+#define EXCLUDE_BME280AUX
 
 #else
 #error "This board is not supported!"

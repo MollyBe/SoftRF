@@ -1,6 +1,6 @@
 /*
  * RecorderHelper.cpp
- * Copyright (C) 2016-2024 Linar Yusupov
+ * Copyright (C) 2016-2025 Linar Yusupov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,8 +46,7 @@ void Recorder_setup()
                            hw_info.gnss == GNSS_MODULE_AT65 ? l76k_specs :
                            "Generic NMEA";
 
-  if (SoC->id          == SOC_ESP32S3      &&
-      hw_info.gnss     != GNSS_MODULE_NONE &&
+  if (hw_info.gnss     != GNSS_MODULE_NONE &&
       hw_info.baro     != BARO_MODULE_NONE &&
       (hw_info.storage == STORAGE_CARD     ||
        hw_info.storage == STORAGE_FLASH_AND_CARD)) {

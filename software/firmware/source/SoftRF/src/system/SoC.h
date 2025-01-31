@@ -1,6 +1,6 @@
 /*
  * SoCHelper.h
- * Copyright (C) 2018-2024 Linar Yusupov
+ * Copyright (C) 2018-2025 Linar Yusupov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,9 +33,10 @@
 #include "../platform/SAMD.h"
 #include "../platform/AVR.h"
 #include "../platform/ASR66.h"
-#include "../platform/RP2040.h"
+#include "../platform/RP2XXX.h"
 #include "../platform/RA4M1.h"
 #include "../platform/EFR32.h"
+#include "../platform/CH32.h"
 
 typedef struct SoC_ops_struct {
   uint8_t id;
@@ -100,6 +101,7 @@ enum
 	SOC_ESP32C3,
 	SOC_ESP32C6,
 	SOC_ESP32H2,
+	SOC_ESP32P4,
 	SOC_RPi,
 	SOC_CC13X0,
 	SOC_CC13X2,
@@ -111,8 +113,11 @@ enum
 	SOC_AVR,
 	SOC_ASR66,
 	SOC_RP2040,
+	SOC_RP2350_ARM,
+	SOC_RP2350_RISC,
 	SOC_RA4M1,
-	SOC_EFR32
+	SOC_EFR32,
+	SOC_CH32
 };
 
 extern const SoC_ops_t *SoC;
@@ -149,14 +154,17 @@ extern const SoC_ops_t AVR_ops;
 #if defined(ARDUINO_ARCH_ASR6601)
 extern const SoC_ops_t ASR66_ops;
 #endif
-#if defined(ARDUINO_ARCH_RP2040)
-extern const SoC_ops_t RP2040_ops;
+#if defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_RP2350)
+extern const SoC_ops_t RP2xxx_ops;
 #endif
 #if defined(ARDUINO_ARCH_RENESAS)
 extern const SoC_ops_t RA4M1_ops;
 #endif
 #if defined(ARDUINO_ARCH_SILABS)
 extern const SoC_ops_t EFR32_ops;
+#endif
+#if defined(ARDUINO_ARCH_CH32)
+extern const SoC_ops_t CH32_ops;
 #endif
 
 byte SoC_setup(void);

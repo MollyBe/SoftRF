@@ -1,8 +1,12 @@
+#if defined(ESP32)
+#include "sdkconfig.h"
+#endif /* ESP32 */
+
 /*
   u8g2_fonts.c
 */
 #include "u8g2_fonts.h"
-
+#if !defined(CONFIG_IDF_TARGET_ESP32S3)
 /*
   Fontname: u8glib_4
   Copyright: public domain
@@ -298,6 +302,8 @@ const uint8_t u8g2_font_emoticons21_tr[1156] U8G2_FONT_SECTION("u8g2_font_emotic
   "\220$\42\212\304\6\262L\36\220\312&r\331\244N<\30\344\0\70\5\0l\3\71\5\0l\3:\5"
   "\0l\3;\5\0l\3<\5\0l\3=\5\0l\3>\5\0l\3\77\5\0l\3\0\0\0\4"
   "\377\377\0";
+#endif /* CONFIG_IDF_TARGET_ESP32S3 */
+
 /*
   Fontname: battery19
   Copyright: Created with Fony 1.4.7
@@ -311,6 +317,8 @@ const uint8_t u8g2_font_battery19_tn[167] U8G2_FONT_SECTION("u8g2_font_battery19
   "\35\304\272P$\24\261\204\42\241\210%\24\11E,\241H(\342\203\0\65\37\70\317\42\35\304\22\212\204"
   "\42\226P$\24\261\204\42\241\210%\24\11E,\241H(\342\203\0\66\5\0\316\0\67\5\0\316\0\0"
   "\0\0\4\377\377\0";
+
+#if !defined(CONFIG_IDF_TARGET_ESP32S3)
 /*
   Fontname: -FreeType-FreeDooM-Bold-R-Normal--34-340-72-72-P-170-ISO8859-1
   Copyright: FreeUniveral (c) Stephen Wilson 2009    Original Font Sil-Sophia  Copyright (c) SIL International, 1994-2008.
@@ -343730,3 +343738,5 @@ const uint8_t u8g2_font_px437wyse700b_mn[330] U8G2_FONT_SECTION("u8g2_font_px437
   "\357\36%\0\70\32\260\3\327\335\324\320\334\314\334\320\324\334\335\324\320\334\314\334\320\324\334=\62\0\71\26"
   "\260\3\327\335\324\320\334\314\334\320\330\330\301\364\306c\7\361\310\0:\16\260\3\77\302\351y<\231\236\307"
   "\24\0\0\0\0\4\377\377\0";
+
+#endif /* CONFIG_IDF_TARGET_ESP32S3 */

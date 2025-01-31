@@ -1,6 +1,6 @@
 /*
  * SoCHelper.cpp
- * Copyright (C) 2019-2024 Linar Yusupov
+ * Copyright (C) 2019-2025 Linar Yusupov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -44,8 +44,8 @@ byte SoC_setup()
   SoC = &AVR_ops;
 #elif defined(ARDUINO_ARCH_ASR6601)
   SoC = &ASR66_ops;
-#elif defined(ARDUINO_ARCH_RP2040)
-  SoC = &RP2040_ops;
+#elif defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_RP2350)
+  SoC = &RP2xxx_ops;
 #else
 #error "This hardware platform is not supported!"
 #endif

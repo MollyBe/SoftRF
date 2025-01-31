@@ -1,6 +1,6 @@
 #
 # Makefile.RPi
-# Copyright (C) 2018-2024 Linar Yusupov
+# Copyright (C) 2018-2025 Linar Yusupov
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -139,9 +139,10 @@ PLAT_CPPS     := $(PLATFORM_PATH)/ESP8266.cpp  \
                  $(PLATFORM_PATH)/SAMD.cpp     \
                  $(PLATFORM_PATH)/AVR.cpp      \
                  $(PLATFORM_PATH)/ASR66.cpp    \
-                 $(PLATFORM_PATH)/RP2040.cpp   \
+                 $(PLATFORM_PATH)/RP2XXX.cpp   \
                  $(PLATFORM_PATH)/RA4M1.cpp    \
-                 $(PLATFORM_PATH)/EFR32.cpp
+                 $(PLATFORM_PATH)/EFR32.cpp    \
+                 $(PLATFORM_PATH)/CH32.cpp
 
 DRV_CPPS      := $(DRIVER_PATH)/RF.cpp             \
                  $(DRIVER_PATH)/radio/nordic.cpp   \

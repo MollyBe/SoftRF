@@ -1,6 +1,6 @@
 /*
  * EEPROMHelper.cpp
- * Copyright (C) 2016-2024 Linar Yusupov
+ * Copyright (C) 2016-2025 Linar Yusupov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -88,39 +88,53 @@ void EEPROM_defaults()
                                               hw_info.model == SOFTRF_MODEL_ES ?
                                               RF_PROTOCOL_ADSB_1090 :
                                               hw_info.model == SOFTRF_MODEL_HAM ?
-                                              RF_PROTOCOL_APRS : RF_PROTOCOL_OGNTP;
+                                              RF_PROTOCOL_APRS : RF_PROTOCOL_ADSL_860;
   eeprom_block.field.settings.band          = RF_BAND_EU;
   eeprom_block.field.settings.aircraft_type = hw_info.model == SOFTRF_MODEL_BRACELET ?
                                               AIRCRAFT_TYPE_STATIC :
-                                              AIRCRAFT_TYPE_GLIDER;
+                                              AIRCRAFT_TYPE_POWERED;
   eeprom_block.field.settings.txpower       = hw_info.model == SOFTRF_MODEL_ES ?
                                               RF_TX_POWER_OFF :
                                               hw_info.model == SOFTRF_MODEL_HAM ?
                                               RF_TX_POWER_LOW : RF_TX_POWER_FULL;
-  eeprom_block.field.settings.bluetooth     = BLUETOOTH_NONE;
+  eeprom_block.field.settings.bluetooth     = BLUETOOTH_LE_HM10_SERIAL;
   eeprom_block.field.settings.alarm         = TRAFFIC_ALARM_DISTANCE;
   eeprom_block.field.settings.aircraft_id   = 0;
 
-  /* This will speed up 'factory' boot sequence on Editions other than Standalone */
+  /*
+   * This will speed up 'factory' boot sequence on Editions
+   * other than Standalone and Card
+   */
   if (hw_info.model == SOFTRF_MODEL_STANDALONE) {
     eeprom_block.field.settings.volume      = BUZZER_VOLUME_FULL;
     eeprom_block.field.settings.pointer     = DIRECTION_NORTH_UP;
   } else {
-    eeprom_block.field.settings.volume      = BUZZER_OFF;
+#if defined(USE_PWM_SOUND)
+    if (hw_info.model == SOFTRF_MODEL_CARD) {
+      eeprom_block.field.settings.volume    = BUZZER_VOLUME_FULL;
+    } else
+#endif /* USE_PWM_SOUND */
+    {
+      eeprom_block.field.settings.volume    = BUZZER_OFF;
+    }
     eeprom_block.field.settings.pointer     = LED_OFF;
   }
 
   eeprom_block.field.settings.nmea_g     = true;
   eeprom_block.field.settings.nmea_p     = false;
-  eeprom_block.field.settings.nmea_l     = false; /* not required for Stratux */
+  eeprom_block.field.settings.nmea_l     = true;
   eeprom_block.field.settings.nmea_s     = true;
 
 #if (ARDUINO_USB_CDC_ON_BOOT && !defined(USE_USB_HOST)) || \
     (defined(USBD_USE_CDC) && !defined(DISABLE_GENERIC_SERIALUSB))
   eeprom_block.field.settings.nmea_out   = NMEA_USB;
+#elif defined(ARDUINO_ARCH_SILABS)
+  eeprom_block.field.settings.nmea_out   = NMEA_UART;
 #else
-  eeprom_block.field.settings.nmea_out   = hw_info.model == SOFTRF_MODEL_BADGE     ?
-                                           NMEA_USB :
+  eeprom_block.field.settings.nmea_out   = hw_info.model == SOFTRF_MODEL_BADGE    ||
+                                           hw_info.model == SOFTRF_MODEL_CARD     ||
+                                           hw_info.model == SOFTRF_MODEL_COZY      ?
+                                           NMEA_BLUETOOTH :
                                            hw_info.model == SOFTRF_MODEL_ES        ?
                                            NMEA_OFF :
                                            hw_info.model == SOFTRF_MODEL_ACADEMY  ||

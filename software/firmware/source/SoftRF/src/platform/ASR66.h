@@ -1,6 +1,6 @@
 /*
  * Platform_ASR66.h
- * Copyright (C) 2022-2024 Linar Yusupov
+ * Copyright (C) 2022-2025 Linar Yusupov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -138,6 +138,7 @@ struct rst_info {
 #define EXCLUDE_GNSS_GOKE
 //#define EXCLUDE_GNSS_AT65
 #define EXCLUDE_GNSS_UC65
+#define EXCLUDE_GNSS_AG33
 #define EXCLUDE_LOG_GNSS_VERSION
 //#define GNSS_MASTER_ID        0xc5fb3201
 
@@ -147,6 +148,7 @@ struct rst_info {
 #define EXCLUDE_BMP180           //  -    kb
 //#define EXCLUDE_BMP280         //  -    kb
 #define EXCLUDE_BME680           //  -    kb
+#define EXCLUDE_BME280AUX        //  -    kb
 #define EXCLUDE_MPL3115A2        //  -    kb
 #define EXCLUDE_NRF905           //  -    kb
 #define EXCLUDE_UATM             //  -    kb

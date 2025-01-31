@@ -1,6 +1,6 @@
 /*
  * JSONHelper.cpp
- * Copyright (C) 2018-2024 Linar Yusupov
+ * Copyright (C) 2018-2025 Linar Yusupov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,8 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#if defined(RASPBERRY_PI) || defined(ARDUINO_ARCH_NRF52) || \
-    defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_ESP32)
+#if defined(RASPBERRY_PI)        || defined(ARDUINO_ARCH_NRF52)  || \
+    defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_RP2350) || \
+    defined(ARDUINO_ARCH_ESP32)
 
 #include "../../system/SoC.h"
 #include <TinyGPS++.h>
@@ -669,8 +670,9 @@ void parseUISettings(JsonObject& root)
 }
 #endif /* RASPBERRY_PI || ARDUINO_ARCH_NRF52 */
 
-#if defined(RASPBERRY_PI) || defined(ARDUINO_ARCH_NRF52) || \
-    defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_ESP32)
+#if defined(RASPBERRY_PI)        || defined(ARDUINO_ARCH_NRF52)  || \
+    defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_RP2350) || \
+    defined(ARDUINO_ARCH_ESP32)
 
 void parseSettings(JsonObject& root)
 {
@@ -743,6 +745,8 @@ void parseSettings(JsonObject& root)
       eeprom_block.field.settings.aircraft_type = AIRCRAFT_TYPE_TOWPLANE;
     } else if (!strcmp(aircraft_type_s,"POWERED")) {
       eeprom_block.field.settings.aircraft_type = AIRCRAFT_TYPE_POWERED;
+    } else if (!strcmp(aircraft_type_s,"JET")) {
+      eeprom_block.field.settings.aircraft_type = AIRCRAFT_TYPE_JET;
     } else if (!strcmp(aircraft_type_s,"HELICOPTER")) {
       eeprom_block.field.settings.aircraft_type = AIRCRAFT_TYPE_HELICOPTER;
     } else if (!strcmp(aircraft_type_s,"UAV")) {
@@ -751,6 +755,8 @@ void parseSettings(JsonObject& root)
       eeprom_block.field.settings.aircraft_type = AIRCRAFT_TYPE_HANGGLIDER;
     } else if (!strcmp(aircraft_type_s,"PARAGLIDER")) {
       eeprom_block.field.settings.aircraft_type = AIRCRAFT_TYPE_PARAGLIDER;
+    } else if (!strcmp(aircraft_type_s,"PARACHUTE")) {
+      eeprom_block.field.settings.aircraft_type = AIRCRAFT_TYPE_PARACHUTE;
     } else if (!strcmp(aircraft_type_s,"BALLOON")) {
       eeprom_block.field.settings.aircraft_type = AIRCRAFT_TYPE_BALLOON;
     } else if (!strcmp(aircraft_type_s,"STATIC")) {

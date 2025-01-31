@@ -1,6 +1,6 @@
 /*
  * NMEAHelper.cpp
- * Copyright (C) 2019-2024 Linar Yusupov
+ * Copyright (C) 2019-2025 Linar Yusupov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -329,7 +329,8 @@ void NMEA_loop()
     if (SoC->USB_ops) {
       while (SoC->USB_ops->available() > 0) {
         char c = SoC->USB_ops->read();
-        if (hw_info.revision != HW_REV_PICO_W) {
+        if (hw_info.revision != HW_REV_PICO_W &&
+            hw_info.revision != HW_REV_PICO_2W) {
           Serial.write(c);
         }
         NMEA_Parse_Character(c);

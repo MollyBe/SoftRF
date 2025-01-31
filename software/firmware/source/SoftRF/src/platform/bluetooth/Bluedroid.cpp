@@ -1,6 +1,6 @@
 /*
  * BluetoothHelper.cpp
- * Copyright (C) 2018-2024 Linar Yusupov
+ * Copyright (C) 2018-2025 Linar Yusupov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 
 #include "../../system/SoC.h"
 
-#if defined(CONFIG_BLUEDROID_ENABLED) && !defined(USE_NIMBLE)
+#if defined(CONFIG_BLUEDROID_ENABLED) && !defined(USE_NIMBLE) && !defined(USE_ARDUINOBLE)
 /*
  *  BLE code is based on Neil Kolban example for IDF:
  *    https://github.com/nkolban/esp32-snippets/blob/master/cpp_utils/tests/BLE%20Tests/SampleNotify.cpp
@@ -30,7 +30,6 @@
  */
 #include <BLEDevice.h>
 #include <BLEServer.h>
-#include <BLEUtils.h>
 #include <BLE2902.h>
 
 #include "esp_gap_bt_api.h"
@@ -112,8 +111,10 @@ class UARTCallbacks: public BLECharacteristicCallbacks {
 
 static void ESP32_Bluetooth_setup()
 {
+  char id_06x[8];
+  snprintf(id_06x, sizeof(id_06x),"%06x", SoC->getChipId() & 0x00FFFFFFU);
   BT_name += "-";
-  BT_name += String(SoC->getChipId() & 0x00FFFFFFU, HEX);
+  BT_name += String(id_06x);
 
   switch (settings->bluetooth)
   {
@@ -216,6 +217,8 @@ static void ESP32_Bluetooth_setup()
                                   hw_info.model == SOFTRF_MODEL_PRIME_MK3  ? "Prime Mark III"     :
                                   hw_info.model == SOFTRF_MODEL_HAM        ? "Ham Edition"        :
                                   hw_info.model == SOFTRF_MODEL_MIDI       ? "Midi Edition"       :
+                                  hw_info.model == SOFTRF_MODEL_ECO        ? "Eco Edition"        :
+                                  hw_info.model == SOFTRF_MODEL_INK        ? "Ink Edition"        :
                                   "Unknown";
       char SerialNum[9];
       snprintf(SerialNum, sizeof(SerialNum), "%08X", SoC->getChipId());

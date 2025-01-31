@@ -1,6 +1,6 @@
 /*
  * WebHelper.cpp
- * Copyright (C) 2016-2024 Linar Yusupov
+ * Copyright (C) 2016-2025 Linar Yusupov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -121,7 +121,7 @@ static const char about_html[] PROGMEM = "<html>\
 <tr><th align=left>Limor Fried and Kevin Townsend</th><td align=left>Adafruit MPL3115A2 library</td></tr>\
 <tr><th align=left>Oliver Kraus</th><td align=left>U8g2 LCD, OLED and eInk library</td></tr>\
 <tr><th align=left>Michael Miller</th><td align=left>NeoPixelBus library</td></tr>\
-<tr><th align=left>Shenzhen Xin Yuan (LilyGO) ET company</th><td align=left>TTGO T-Beam, T-Watch and T-TWR</td></tr>\
+<tr><th align=left>Shenzhen Xin Yuan (LilyGO) ET company</th><td align=left>TTGO T-Beam, T-Watch, T-TWR and T3-C6</td></tr>\
 <tr><th align=left>JS Foundation</th><td align=left>jQuery library</td></tr>\
 <tr><th align=left>XCSoar team</th><td align=left>EGM96 data</td></tr>\
 <tr><th align=left>Mike McCauley</th><td align=left>BCM2835 C library</td></tr>\
@@ -134,7 +134,7 @@ static const char about_html[] PROGMEM = "<html>\
 <tr><th align=left>Lewis He</th><td align=left>AXP20X, XPowersLib and SensorsLib libraries</td></tr>\
 <tr><th align=left>Bodmer</th><td align=left>TFT library</td></tr>\
 <tr><th align=left>Michael Kuyper</th><td align=left>Basic MAC library</td></tr>\
-<tr><th align=left>Earle Philhower</th><td align=left>Arduino Core for RP2040 and ESP8266Audio library</td></tr>\
+<tr><th align=left>Earle Philhower</th><td align=left>Arduino Core for RP2XXX and ESP8266Audio library</td></tr>\
 <tr><th align=left>Steve Marple</th><td align=left>IniFile library</td></tr>\
 <tr><th align=left>Vasilis Georgitzikis</th><td align=left>MD5 library</td></tr>\
 <tr><th align=left>Evan Krall and Somkiat Nakhonthai</th><td align=left>LibAPRS-ESP32 library</td></tr>\
@@ -144,13 +144,13 @@ static const char about_html[] PROGMEM = "<html>\
 <tr><th align=left>Khoi Hoang</th><td align=left>WiFiWebServer and Functional-Vlpp libraries</td></tr>\
 </table>\
 <hr>\
-Copyright (C) 2015-2024 &nbsp;&nbsp;&nbsp; Linar Yusupov\
+Copyright (C) 2015-2025 &nbsp;&nbsp;&nbsp; Linar Yusupov\
 </body>\
 </html>";
 
 void handleSettings() {
 
-  size_t size = 5700;
+  size_t size = 6000;
   char *offset;
   size_t len = 0;
   char *Settings_temp = (char *) malloc(size);
@@ -197,7 +197,8 @@ void handleSettings() {
   /* Radio specific part 1 */
   if (hw_info.rf == RF_IC_SX1276 ||
       hw_info.rf == RF_IC_SX1262 ||
-      hw_info.rf == RF_IC_LR112X) {
+      hw_info.rf == RF_IC_LR1110 ||
+      hw_info.rf == RF_IC_LR1121) {
     snprintf_P ( offset, size,
       PSTR("\
 <tr>\
@@ -233,6 +234,35 @@ void handleSettings() {
      RF_PROTOCOL_ADSL_860, adsl_proto_desc.name,
     (settings->rf_protocol == RF_PROTOCOL_APRS     ? "selected" : ""),
      RF_PROTOCOL_APRS, prol_proto_desc.name
+    );
+  } else if (hw_info.rf == RF_IC_SX1231 ||
+             hw_info.rf == RF_IC_SI4432 ||
+             hw_info.rf == RF_IC_CC1101) {
+    snprintf_P ( offset, size,
+      PSTR("\
+<tr>\
+<th align=left>Protocol</th>\
+<td align=right>\
+<select name='protocol'>\
+<option %s value='%d'>%s</option>\
+<option %s value='%d'>%s</option>\
+<option %s value='%d'>%s</option>"
+#if defined(ENABLE_ADSL)
+"<option %s value='%d'>%s</option>"
+#else
+"<!--<option %s value='%d'>%s</option>-->"
+#endif /* ENABLE_ADSL */
+"</select>\
+</td>\
+</tr>"),
+    (settings->rf_protocol == RF_PROTOCOL_LEGACY   ? "selected" : ""),
+     RF_PROTOCOL_LEGACY, legacy_proto_desc.name,
+    (settings->rf_protocol == RF_PROTOCOL_OGNTP    ? "selected" : ""),
+     RF_PROTOCOL_OGNTP, ogntp_proto_desc.name,
+    (settings->rf_protocol == RF_PROTOCOL_P3I      ? "selected" : ""),
+     RF_PROTOCOL_P3I, p3i_proto_desc.name,
+    (settings->rf_protocol == RF_PROTOCOL_ADSL_860 ? "selected" : ""),
+     RF_PROTOCOL_ADSL_860, adsl_proto_desc.name
     );
   } else {
     snprintf_P ( offset, size,
@@ -378,7 +408,8 @@ void handleSettings() {
 
 #if !defined(EXCLUDE_BLUETOOTH)
   /* SoC specific part 1 */
-  if (SoC->id == SOC_ESP32 || SoC->id == SOC_RP2040) {
+  if (SoC->id == SOC_ESP32      || SoC->id == SOC_RP2040 ||
+      SoC->id == SOC_RP2350_ARM || SoC->id == SOC_RP2350_RISC) {
     snprintf_P ( offset, size,
       PSTR("\
 <tr>\
@@ -481,9 +512,10 @@ void handleSettings() {
   size -= len;
 
   /* SoC specific part 2 */
-  if (SoC->id == SOC_ESP32   || SoC->id == SOC_ESP32S3 ||
-      SoC->id == SOC_ESP32C2 || SoC->id == SOC_ESP32C3 ||
-      SoC->id == SOC_ESP32C6 || SoC->id == SOC_RP2040  ||
+  if (SoC->id == SOC_ESP32      || SoC->id == SOC_ESP32S3     ||
+      SoC->id == SOC_ESP32C2    || SoC->id == SOC_ESP32C3     ||
+      SoC->id == SOC_ESP32C6    || SoC->id == SOC_RP2040      ||
+      SoC->id == SOC_RP2350_ARM || SoC->id == SOC_RP2350_RISC ||
       SoC->id == SOC_RA4M1) {
     snprintf_P ( offset, size,
       PSTR(
@@ -500,9 +532,10 @@ void handleSettings() {
     offset += len;
     size -= len;
   }
-  if (SoC->id == SOC_ESP32S2 || SoC->id == SOC_ESP32S3 ||
-      SoC->id == SOC_ESP32C3 || SoC->id == SOC_ESP32C6 ||
-      SoC->id == SOC_RP2040) {
+  if (SoC->id == SOC_ESP32S2 || SoC->id == SOC_ESP32S3    ||
+      SoC->id == SOC_ESP32C3 || SoC->id == SOC_ESP32C6    ||
+      SoC->id == SOC_RP2040  || SoC->id == SOC_RP2350_ARM ||
+      SoC->id == SOC_RP2350_RISC) {
     snprintf_P ( offset, size,
       PSTR("<option %s value='%d'>USB</option>"),
       (settings->nmea_out == NMEA_USB       ? "selected" : ""), NMEA_USB);
@@ -535,9 +568,10 @@ void handleSettings() {
 
 #if !defined(EXCLUDE_BLUETOOTH)
   /* SoC specific part 3 */
-  if (SoC->id == SOC_ESP32   || SoC->id == SOC_ESP32S3 ||
-      SoC->id == SOC_ESP32C2 || SoC->id == SOC_ESP32C3 ||
-      SoC->id == SOC_ESP32C6 || SoC->id == SOC_RP2040  ||
+  if (SoC->id == SOC_ESP32      || SoC->id == SOC_ESP32S3     ||
+      SoC->id == SOC_ESP32C2    || SoC->id == SOC_ESP32C3     ||
+      SoC->id == SOC_ESP32C6    || SoC->id == SOC_RP2040      ||
+      SoC->id == SOC_RP2350_ARM || SoC->id == SOC_RP2350_RISC ||
       SoC->id == SOC_RA4M1) {
     snprintf_P ( offset, size,
       PSTR("<option %s value='%d'>Bluetooth</option>"),
@@ -549,9 +583,10 @@ void handleSettings() {
   }
 #endif /* EXCLUDE_BLUETOOTH */
 
-  if (SoC->id == SOC_ESP32S2 || SoC->id == SOC_ESP32S3 ||
-      SoC->id == SOC_ESP32C3 || SoC->id == SOC_ESP32C6 ||
-      SoC->id == SOC_RP2040) {
+  if (SoC->id == SOC_ESP32S2 || SoC->id == SOC_ESP32S3    ||
+      SoC->id == SOC_ESP32C3 || SoC->id == SOC_ESP32C6    ||
+      SoC->id == SOC_RP2040  || SoC->id == SOC_RP2350_ARM ||
+      SoC->id == SOC_RP2350_RISC) {
     snprintf_P ( offset, size,
       PSTR("<option %s value='%d'>USB</option>"),
       (settings->gdl90 == GDL90_USB       ? "selected" : ""), GDL90_USB);
@@ -582,9 +617,10 @@ void handleSettings() {
 
 #if !defined(EXCLUDE_BLUETOOTH)
   /* SoC specific part 4 */
-  if (SoC->id == SOC_ESP32   || SoC->id == SOC_ESP32S3 ||
-      SoC->id == SOC_ESP32C2 || SoC->id == SOC_ESP32C3 ||
-      SoC->id == SOC_ESP32C6 || SoC->id == SOC_RP2040  ||
+  if (SoC->id == SOC_ESP32      || SoC->id == SOC_ESP32S3     ||
+      SoC->id == SOC_ESP32C2    || SoC->id == SOC_ESP32C3     ||
+      SoC->id == SOC_ESP32C6    || SoC->id == SOC_RP2040      ||
+      SoC->id == SOC_RP2350_ARM || SoC->id == SOC_RP2350_RISC ||
       SoC->id == SOC_RA4M1) {
     snprintf_P ( offset, size,
       PSTR("<option %s value='%d'>Bluetooth</option>"),
@@ -596,9 +632,10 @@ void handleSettings() {
   }
 #endif /* EXCLUDE_BLUETOOTH */
 
-  if (SoC->id == SOC_ESP32S2 || SoC->id == SOC_ESP32S3 ||
-      SoC->id == SOC_ESP32C3 || SoC->id == SOC_ESP32C6 ||
-      SoC->id == SOC_RP2040) {
+  if (SoC->id == SOC_ESP32S2 || SoC->id == SOC_ESP32S3    ||
+      SoC->id == SOC_ESP32C3 || SoC->id == SOC_ESP32C6    ||
+      SoC->id == SOC_RP2040  || SoC->id == SOC_RP2350_ARM ||
+      SoC->id == SOC_RP2350_RISC) {
     snprintf_P ( offset, size,
       PSTR("<option %s value='%d'>USB</option>"),
       (settings->d1090 == D1090_USB       ? "selected" : ""), D1090_USB);
@@ -862,7 +899,8 @@ void handleRoot() {
 #endif /* ENABLE_RECORDER */
 
   /* SoC specific part 1 */
-  if (SoC->id != SOC_RP2040 && SoC->id != SOC_RA4M1) {
+  if (SoC->id != SOC_RP2040      && SoC->id != SOC_RP2350_ARM &&
+      SoC->id != SOC_RP2350_RISC && SoC->id != SOC_RA4M1) {
     snprintf_P ( offset, size, PSTR("\
     <td align=right><input type=button onClick=\"location.href='/firmware'\" value='Firmware update'></td>"));
     len = strlen(offset);
@@ -1339,6 +1377,7 @@ $('form').submit(function(e){\
 
 /* FLASH memory usage optimization */
 #if !defined(ARDUINO_ARCH_RP2040)       && \
+    !defined(ARDUINO_ARCH_RP2350)       && \
     !defined(CONFIG_IDF_TARGET_ESP32C2) && \
     !defined(CONFIG_IDF_TARGET_ESP32C6) && \
     !defined(ARDUINO_ARCH_RENESAS)
@@ -1346,7 +1385,7 @@ $('form').submit(function(e){\
   server.on ( "/logo.png", []() {
     server.send_P ( 200, "image/png", Logo, sizeof(Logo) );
   } );
-#endif /* ARDUINO_ARCH_RP2040 CONFIG_IDF_TARGET_ESP32C6 ARDUINO_ARCH_RENESAS */
+#endif /* ARDUINO_ARCH_RP2XXX CONFIG_IDF_TARGET_ESP32C6 ARDUINO_ARCH_RENESAS */
 
 #if !defined(EXCLUDE_OTA)
   server.on ( "/jquery.min.js", []() {

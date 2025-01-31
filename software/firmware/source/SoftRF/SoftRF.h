@@ -1,6 +1,6 @@
 /*
  * SoftRF.h
- * Copyright (C) 2016-2024 Linar Yusupov
+ * Copyright (C) 2016-2025 Linar Yusupov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@
 
 #define SOFTRF_IDENT            "SoftRF"
 #define SOFTRF_FIRMWARE_VERSION CURRENT_DATE
-#define SOFTRF_USB_FW_VERSION   0x0105
+#define SOFTRF_USB_FW_VERSION   0x0106
 
 #define ENTRY_EXPIRATION_TIME   10 /* seconds */
 #define LED_EXPIRATION_TIME     5  /* seconds */
@@ -75,6 +75,9 @@
 #define NMEA_UDP_PORT     10110
 #define NMEA_TCP_PORT     2000
 
+//#define GPS_HIGH_RATE // 10Hz GPS-only update rate
+//#define GPS_MEDIUM_RATE // 5Hz GPS-only update rate
+
 /*
  * Serial I/O default values.
  * Can be overridden by platfrom-specific code.
@@ -85,7 +88,7 @@
  * for most of GNSS modules
  * being used in SoftRF project
  */
-#define SERIAL_IN_BR      9600
+#define SERIAL_IN_BR      115200 // 9600
 #endif
 #if !defined(SERIAL_IN_BITS)
 #define SERIAL_IN_BITS    SERIAL_8N1
@@ -98,7 +101,7 @@
  *
  * Applicable for Standalone Edition. Inherited by most of other SoftRF platforms.
  */
-#define STD_OUT_BR        115200
+#define STD_OUT_BR        115200 // 38400
 #define STD_OUT_BITS      SERIAL_8N1
 
 #if !defined(SERIAL_OUT_BR)
@@ -225,6 +228,11 @@ enum
 	SOFTRF_MODEL_BALKAN,
 	SOFTRF_MODEL_HAM,
 	SOFTRF_MODEL_MIDI,
+	SOFTRF_MODEL_ECO,
+	SOFTRF_MODEL_INK,
+	SOFTRF_MODEL_CARD,
+	SOFTRF_MODEL_COZY,
+	SOFTRF_MODEL_NEO,
 };
 
 enum
@@ -253,11 +261,13 @@ enum
 	IMU_NONE,
 	ACC_BMA423,
 	ACC_ADXL362,
+	ACC_QMA6100P,
 	IMU_MPU6886,
 	IMU_MPU9250,
 	IMU_BNO080,
 	IMU_ICM20948,
 	IMU_QMI8658,
+	IMU_BHI260AP,
 };
 
 enum
@@ -267,6 +277,7 @@ enum
 	MAG_AK09916,
 	MAG_IIS2MDC,
 	MAG_QMC6310,
+	MAG_BMM150,
 };
 
 extern ufo_t ThisAircraft;

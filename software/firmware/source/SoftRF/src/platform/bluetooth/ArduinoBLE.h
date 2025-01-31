@@ -1,6 +1,6 @@
 /*
  * ArduinoBLE.h
- * Copyright (C) 2024 Linar Yusupov
+ * Copyright (C) 2024-2025 Linar Yusupov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,6 +39,6 @@
 
 #define BLE_MAX_WRITE_CHUNK_SIZE  20
 
-extern IODev_ops_t RA4M1_Bluetooth_ops;
+extern IODev_ops_t ArdBLE_Bluetooth_ops;
 
 #endif /* ARDUINOBLE_H */

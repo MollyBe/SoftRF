@@ -21,12 +21,23 @@
 #include <cc13xx/cc13xx.h>
 #endif /* ENERGIA_ARCH_CC13XX || ENERGIA_ARCH_CC13X2 */
 
-#if defined(ARDUINO_ARCH_RENESAS)
+#if defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_RP2350)
+#undef  SPI
+#define SPI SPI1
+#endif /* ARDUINO_ARCH_RP2040 || ARDUINO_ARCH_RP2350 */
+
+#if defined(ARDUINO_ARCH_RENESAS) // || defined(ARDUINO_ARCH_SILABS)
 #include <SoftSPI.h>
 extern  SoftSPI RadioSPI;
 #undef  SPI
 #define SPI RadioSPI
-#endif /* ARDUINO_ARCH_RENESAS */
+#endif /* ARDUINO_ARCH_RENESAS || ARDUINO_ARCH_SILABS */
+
+#if defined(ARDUINO_ARCH_CH32)
+extern  SPIClass RadioSPI;
+#undef  SPI
+#define SPI RadioSPI
+#endif /* ARDUINO_ARCH_CH32 */
 
 #include "../lmic.h"
 #include "hal.h"
@@ -235,7 +246,7 @@ bool hal_pin_tcxo (u1_t val) {
 //    BCM2835_CORE_CLK_HZ = 250000000
 //    Clock divider / 64 = 3.906 MHz
 static const SPISettings settings(BCM2835_SPI_CLOCK_DIVIDER_64, BCM2835_SPI_BIT_ORDER_MSBFIRST, BCM2835_SPI_MODE0);
-#elif defined(__ASR6501__) || defined(ARDUINO_ARCH_ASR650X)
+//#elif defined(__ASR6501__) || defined(ARDUINO_ARCH_ASR650X)
 /* nothing to do */
 #else
 static const SPISettings settings(LMIC_SPI_FREQ, MSBFIRST, SPI_MODE0);
@@ -422,7 +433,7 @@ u1_t hal_checkTimer (u4_t time) {
 }
 
 #if defined(ARDUINO_ARCH_STM32) || defined(ARDUINO_ARCH_SAMD) || \
-    defined(ARDUINO_ARCH_RENESAS)
+    defined(ARDUINO_ARCH_RENESAS) || defined(ARDUINO_ARCH_CH32)
 
 // Fix for STM32 HAL based cores.
 

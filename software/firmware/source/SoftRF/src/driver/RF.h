@@ -1,6 +1,6 @@
 /*
  * RFHelper.h
- * Copyright (C) 2016-2024 Linar Yusupov
+ * Copyright (C) 2016-2025 Linar Yusupov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -79,7 +79,11 @@ enum
   RF_IC_R820T,
   RF_IC_MSI001,
   RF_IC_SA8X8,
-  RF_IC_LR112X,
+  RF_IC_LR1110,
+  RF_IC_LR1121,
+  RF_IC_CC1101,
+  RF_IC_SX1231,
+  RF_IC_SI4432,
 };
 
 enum
@@ -171,7 +175,11 @@ extern const rfchip_ops_t sa8x8_ops;
 #endif /* USE_SA8X8 */
 
 #if defined(USE_RADIOLIB)
-extern const rfchip_ops_t lr112x_ops;
+extern const rfchip_ops_t lr1110_ops;
+extern const rfchip_ops_t lr1121_ops;
+extern const rfchip_ops_t cc1101_ops;
+extern const rfchip_ops_t sx1231_ops;
+extern const rfchip_ops_t si4432_ops;
 #endif /* USE_RADIOLIB */
 
 #endif /* RFHELPER_H */

@@ -1,6 +1,6 @@
 /*
  * SoftRF(.ino) firmware
- * Copyright (C) 2016-2024 Linar Yusupov
+ * Copyright (C) 2016-2025 Linar Yusupov
  *
  * Author: Linar Yusupov, linar.r.yusupov@gmail.com
  *
@@ -59,7 +59,7 @@
  *   Arduino Cores for Atmel SAMD and Renesas RA4 are developed by Arduino LLC
  *   FlashStorage library is developed by Arduino LLC
  *   USB host library 2.0 for Zero/M0/SAMD is developed by gdsports625@gmail.com
- *   Arduino Core for RP2040 and ESP8266Audio library are developed by Earle Philhower
+ *   Arduino Core for RP2XXX and ESP8266Audio library are developed by Earle Philhower
  *   MPU-9250 9 DoF sensor library is developed by Kris Winer and Hideaki Tai
  *   Pico PIO USB library is developed by sekigon-gonnoc
  *   IniFile library is developed by Steve Marple
@@ -68,6 +68,11 @@
  *   SA818 library is developed by Gibbon Zen
  *   OpenDroneID library is developed by Steve Jack
  *   WiFiWebServer and Functional-Vlpp libraries are developed by Khoi Hoang
+ *   RadioLib library is developed by Jan Gromes
+ *   Arduino Core for EFR32 Series 2 is developed by Tamas Jozsi
+ *   ArduinoBLE library is developed by Arduino LLC
+ *   Arduino Core for CH32 is developed by Tianpei Lee
+ *   QMA6100P library is developed by Tristan Alderson
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -150,7 +155,7 @@ void setup()
   Serial.print(SoC->name);
   Serial.print(F(" FW.REV: " SOFTRF_FIRMWARE_VERSION " DEV.ID: "));
   Serial.println(String(SoC->getChipId(), HEX));
-  Serial.println(F("Copyright (C) 2015-2024 Linar Yusupov. All rights reserved."));
+  Serial.println(F("Copyright (C) 2015-2025 Linar Yusupov. All rights reserved."));
 
   SERIAL_FLUSH();
 
@@ -177,7 +182,7 @@ void setup()
       id += 0x00010000;
     }
     ThisAircraft.addr = id;
-    ThisAircraft.addr_type = ADDR_TYPE_RANDOM;
+    ThisAircraft.addr_type = ADDR_TYPE_FLARM;
   } else {
     ThisAircraft.addr = settings->aircraft_id & 0x00FFFFFF;
     ThisAircraft.addr_type = ADDR_TYPE_ICAO;

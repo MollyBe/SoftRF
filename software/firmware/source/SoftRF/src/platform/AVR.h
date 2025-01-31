@@ -1,6 +1,6 @@
 /*
  * Platform_AVR.h
- * Copyright (C) 2021-2024 Linar Yusupov
+ * Copyright (C) 2021-2025 Linar Yusupov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -110,7 +110,7 @@ struct rst_info {
 
 /* SX1276 */
 #define SOC_GPIO_PIN_RST      9              // PH6
-#define SOC_GPIO_PIN_BUSY     SOC_UNUSED_PIN
+#define SOC_GPIO_PIN_BUSY     LMIC_UNUSED_PIN
 #define SOC_GPIO_PIN_DIO1     6              // PH3
 
 /* RF antenna switch */
@@ -141,6 +141,7 @@ struct rst_info {
 #define EXCLUDE_GNSS_GOKE
 #define EXCLUDE_GNSS_AT65
 #define EXCLUDE_GNSS_UC65
+#define EXCLUDE_GNSS_AG33
 //#define EXCLUDE_LOG_GNSS_VERSION
 
 /* Component                         Cost */
@@ -149,6 +150,7 @@ struct rst_info {
 #define EXCLUDE_BMP180           //  -    kb
 //#define EXCLUDE_BMP280         //  -    kb
 #define EXCLUDE_BME680           //  -    kb
+#define EXCLUDE_BME280AUX        //  -    kb
 #define EXCLUDE_MPL3115A2        //  -    kb
 #define EXCLUDE_NRF905           //  -    kb
 #define EXCLUDE_UATM             //  -    kb
@@ -157,6 +159,13 @@ struct rst_info {
 #define EXCLUDE_LED_RING         //  -    kb
 //#define EXCLUDE_SOUND
 #define EXCLUDE_IMU
+
+//#define USE_BASICMAC
+//#define EXCLUDE_SX1276         //  -  3 kb
+//#define USE_RADIOLIB
+#define EXCLUDE_CC1101
+#define EXCLUDE_SI443X
+#define EXCLUDE_SX1231
 
 //#define USE_OLED               //       kb
 #define EXCLUDE_OLED_049

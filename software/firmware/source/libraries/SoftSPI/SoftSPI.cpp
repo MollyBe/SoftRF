@@ -2,12 +2,13 @@
 
 #if defined(ARDUINO_ARCH_NRF52)
 SoftSPI::SoftSPI(uint8_t mosi, uint8_t miso, uint8_t sck) : SPIClass(NRF_SPIM0, 0, 0, 0)
-#elif defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_ARCH_RP2040) || \
-      defined(ARDUINO_ARCH_RENESAS)
+#elif defined(ARDUINO_ARCH_ESP32) || defined(ARDUINO_ARCH_RP2040)   || \
+      defined(ARDUINO_ARCH_RENESAS) || defined(ARDUINO_ARCH_SILABS) || \
+      defined(ARDUINO_ARCH_CH32)
 SoftSPI::SoftSPI(uint8_t mosi, uint8_t miso, uint8_t sck) : SPIClass()
 #else
 #error "This build architecture is not supported!"
-#endif /* ARDUINO_ARCH_NRF52 || ARDUINO_ARCH_ESP32 || ARDUINO_ARCH_RP2040 */
+#endif /* NRF52 || ESP32 || RP2040 || RENESAS || SILABS || CH32 */
 {
     _mosi = mosi;
     _miso = miso;
@@ -134,10 +135,11 @@ void SoftSPI::endTransaction(void)
 {
 }
 
-#if defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_RENESAS)
+#if defined(ARDUINO_ARCH_RP2040) || defined(ARDUINO_ARCH_RENESAS) || \
+    defined(ARDUINO_ARCH_SILABS)
 /* compatibility with Arduino RP2040 Core */
 void SoftSPI::usingInterrupt(int interruptNumber) {}
 void SoftSPI::notUsingInterrupt(int interruptNumber) {}
 void SoftSPI::attachInterrupt() {}
 void SoftSPI::detachInterrupt() {}
-#endif /* ARDUINO_ARCH_RP2040 || ARDUINO_ARCH_RENESAS */
+#endif /* RP2040 || RENESAS || SILABS */

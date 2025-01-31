@@ -1,6 +1,6 @@
 /*
  * almic.cpp
- * Copyright (C) 2017-2024 Linar Yusupov
+ * Copyright (C) 2017-2025 Linar Yusupov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -29,6 +29,10 @@
 
 #include "../EEPROM.h"
 #include "../Battery.h"
+
+#ifndef RadioSPI
+#define RadioSPI        SPI
+#endif
 
 extern size_t RF_tx_size;
 
@@ -126,7 +130,7 @@ static bool sx1276_probe()
   v = sx1276_readReg(SX1276_RegVersion);
 
   pinMode(lmic_pins.nss, INPUT);
-  SPI.end();
+  RadioSPI.end();
 
   if (v == 0x12 || v == 0x13) {
 
@@ -185,7 +189,7 @@ static bool sx1262_probe()
   v = sx1262_ReadReg(REG_LORASYNCWORDLSB);
 
   pinMode(lmic_pins.nss, INPUT);
-  SPI.end();
+  RadioSPI.end();
 
   u1_t fanet_sw_lsb = ((fanet_proto_desc.syncword[0]  & 0x0F) << 4) | 0x04;
   if (v == SX126X_DEF_LORASYNCWORDLSB || v == fanet_sw_lsb) {
@@ -380,7 +384,10 @@ static void sx12xx_setvars()
 
     if (RF_FreqPlan.Bandwidth == RF_RX_BANDWIDTH_SS_250KHZ) {
       LMIC.rps = setBw(LMIC.rps, BW500);
+    } else if (RF_FreqPlan.Bandwidth == RF_RX_BANDWIDTH_SS_62KHZ) {
+      LMIC.rps = setBw(LMIC.rps, BW125);
     }
+
 #if defined(ENABLE_PROL)
   } else if (LMIC.protocol && LMIC.protocol->type == RF_PROTOCOL_APRS) {
     LMIC.rps = setCr(LMIC.rps, CR_4_5);
@@ -466,6 +473,12 @@ static bool sx12xx_transmit()
     tx_timeout += tx_timeout;
 #endif
 
+#if defined(USE_BASICMAC)
+    if (rf_chip->type == RF_IC_SX1262 && lmic_pins.busy == LMIC_UNUSED_PIN) {
+      tx_timeout += 200;
+    }
+#endif
+
     unsigned long tx_start   = millis();
 
     while (sx12xx_transmit_complete == false) {
@@ -489,7 +502,7 @@ static void sx1276_shutdown()
 {
   LMIC_shutdown();
 
-  SPI.end();
+  RadioSPI.end();
 }
 
 #if defined(USE_BASICMAC)
@@ -499,7 +512,7 @@ static void sx1262_shutdown()
   sx126x_ll_ops.radio_sleep();
   delay(1);
 
-  SPI.end();
+  RadioSPI.end();
 }
 #endif /* USE_BASICMAC */
 

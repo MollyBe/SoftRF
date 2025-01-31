@@ -1,6 +1,6 @@
 /*
  * SkyWatch.h
- * Copyright (C) 2019-2024 Linar Yusupov
+ * Copyright (C) 2019-2025 Linar Yusupov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,8 +23,8 @@
 #include <Arduino.h>
 #endif /* ARDUINO */
 
-#define SKYWATCH_FIRMWARE_VERSION  "1.1"
-#define SKYWATCH_USB_FW_VERSION    0x0101
+#define SKYWATCH_FIRMWARE_VERSION  "1.2"
+#define SKYWATCH_USB_FW_VERSION    0x0102
 #define SKYWATCH_IDENT    "SkyWatch"
 #define WEBTOP_IDENT      "WebTop"
 #define SOFTRF_IDENT      "SoftRF"
@@ -165,6 +165,11 @@ enum
 	SOFTRF_MODEL_BALKAN,
 	SOFTRF_MODEL_HAM,
 	SOFTRF_MODEL_MIDI,
+	SOFTRF_MODEL_ECO,
+	SOFTRF_MODEL_INK,
+	SOFTRF_MODEL_CARD,
+	SOFTRF_MODEL_COZY,
+	SOFTRF_MODEL_NEO,
 };
 
 enum
@@ -177,6 +182,9 @@ enum
 	HW_REV_TDONGLE,
 	HW_REV_T01C3,
 	HW_REV_PICO_W,
+	HW_REV_PICO_2W,
+	HW_REV_DEVKIT_C6,
+	HW_REV_TULTIMA, /* ESP32-C6-MINI-1U */
 };
 
 enum

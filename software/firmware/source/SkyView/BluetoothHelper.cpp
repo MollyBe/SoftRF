@@ -1,6 +1,6 @@
 /*
  * BluetoothHelper.cpp
- * Copyright (C) 2019-2024 Linar Yusupov
+ * Copyright (C) 2019-2025 Linar Yusupov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -227,9 +227,14 @@ static void ESP32_Bluetooth_setup()
     {
       esp_bt_controller_mem_release(ESP_BT_MODE_BLE);
 
-      BT_name += String(SoC->getChipId() & 0x00FFFFFFU, HEX);
-
+      char id_06x[8];
+      snprintf(id_06x, sizeof(id_06x),"%06x", SoC->getChipId() & 0x00FFFFFFU);
+      BT_name += String(id_06x);
+#if !defined(ESP_IDF_VERSION_MAJOR) || ESP_IDF_VERSION_MAJOR < 5
       SerialBT.setPin(settings->key);
+#elif !defined(CONFIG_BT_SSP_ENABLED)
+      SerialBT.setPin(settings->key);
+#endif /* ESP_IDF_VERSION_MAJOR */
       SerialBT.begin(BT_name.c_str(), true);
 
       xTaskCreate(ESP32_BT_SPP_Connection_Manager, "BT SPP ConMgr Task", 2048, NULL, tskIDLE_PRIORITY, NULL);
@@ -1477,8 +1482,10 @@ static void CYW43_Bluetooth_setup()
 {
   if (_running) return;
 
+  char id_06x[8];
+  snprintf(id_06x, sizeof(id_06x),"%06x", SoC->getChipId() & 0x00FFFFFFU);
   BT_name += "-";
-  BT_name += String(SoC->getChipId() & 0x00FFFFFFU, HEX);
+  BT_name += String(id_06x);
 
   switch (settings->connection)
   {

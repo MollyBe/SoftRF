@@ -1,6 +1,6 @@
 /*
  * SkyView.h
- * Copyright (C) 2019-2024 Linar Yusupov
+ * Copyright (C) 2019-2025 Linar Yusupov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -100,6 +100,8 @@ enum
 	HW_REV_T5_1,
 	HW_REV_PICO,
 	HW_REV_PICO_W,
+	HW_REV_PICO_2,
+	HW_REV_PICO_2W,
 	HW_REV_BPI,
 };
 

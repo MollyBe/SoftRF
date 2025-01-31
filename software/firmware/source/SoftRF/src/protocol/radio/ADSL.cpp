@@ -2,7 +2,7 @@
  * Protocol_ADSL.cpp
  *
  * Encoder and decoder for ADS-L SRD-860 radio protocol
- * Copyright (C) 2024 Linar Yusupov
+ * Copyright (C) 2024-2025 Linar Yusupov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -169,11 +169,7 @@ size_t adsl_encode(void *pkt, ufo_t *this_aircraft) {
   t.Init();
   t.setAddress(this_aircraft->addr);
 
-  if (this_aircraft->addr_type != ADDR_TYPE_ICAO) {
-    t.setAddrTypeOGN(ADDR_TYPE_RANDOM);
-  } else {
-    t.setAddrTypeOGN(ADDR_TYPE_ICAO);
-  }
+  t.setAddrTypeOGN(this_aircraft->addr_type);
     
   t.setRelay(0);
   t.setAcftTypeOGN((int16_t) this_aircraft->aircraft_type);

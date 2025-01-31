@@ -1,6 +1,6 @@
 /*
  * OLEDHelper.h
- * Copyright (C) 2019-2024 Linar Yusupov
+ * Copyright (C) 2019-2025 Linar Yusupov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,9 @@
 #ifndef OLEDHELPER_H
 #define OLEDHELPER_H
 
+#if defined(USE_OLED)
 #include <U8x8lib.h>
+#endif /* USE_OLED */
 
 #define SSD1306_OLED_I2C_ADDR       0x3C
 #define SH1106_OLED_I2C_ADDR        0x3C
@@ -36,7 +38,10 @@ void OLED_info3(int, char *, char *, char *);
 void OLED_Next_Page(void);
 void OLED_Up(void);
 
+#if defined(USE_OLED)
 extern U8X8    *u8x8;
+#endif /* USE_OLED */
+
 extern uint8_t OLED_flip;
 extern bool    OLED_display_titles;
 extern bool    OLED_busy;
